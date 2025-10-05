@@ -9,7 +9,8 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
-  base: './',
+  // Base path - set to /~s408194/ for helios deployment
+  base: '/~s408194/',
   build: {
     assetsDir: 'assets',
     rollupOptions: {
