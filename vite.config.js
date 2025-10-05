@@ -9,7 +9,8 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
-  base: '/~s408194/',
+  // Using HashRouter, so base can be relative
+  base: './',
   build: {
     assetsDir: 'assets',
     rollupOptions: {
