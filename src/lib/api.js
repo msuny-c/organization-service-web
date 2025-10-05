@@ -33,5 +33,18 @@ export const referencesApi = {
   getTypes: () => api.get('/api/organizations/types'),
 };
 
-export const WS_URL = `${API_BASE_URL}/ws`;
+const getWsUrl = () => {
+  const isSecure = window.location.protocol === 'https:';
+  
+  if (API_BASE_URL.startsWith('/') || API_BASE_URL.startsWith('./')) {
+    const wsProtocol = isSecure ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${window.location.host}/ws`;
+  }
+  
+  const url = new URL(API_BASE_URL);
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${url.toString()}/ws`;
+};
+
+export const WS_URL = getWsUrl();
 
