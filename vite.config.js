@@ -9,11 +9,8 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
-  // Base path for deployment
-  // Use '/' for root deployment or '/~username/' for user directory
   base: './',
   build: {
-    // Generate relative paths in index.html
     assetsDir: 'assets',
     rollupOptions: {
       output: {

@@ -57,7 +57,7 @@ jobs:
           path: dist.tar.gz
           retention-days: 7
 
-  deploy:
+  promote:
     needs: build
     runs-on: ubuntu-latest
     environment:
