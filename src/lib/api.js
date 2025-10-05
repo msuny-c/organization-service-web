@@ -41,9 +41,11 @@ const getWsUrl = () => {
     return `${wsProtocol}//${window.location.host}/ws`;
   }
   
-  const url = new URL(API_BASE_URL);
-  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${url.toString()}/ws`;
+  const wsUrl = API_BASE_URL
+    .replace(/^https:/, 'wss:')
+    .replace(/^http:/, isSecure ? 'wss:' : 'ws:');
+  
+  return `${wsUrl}/ws`;
 };
 
 export const WS_URL = getWsUrl();
