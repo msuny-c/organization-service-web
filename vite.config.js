@@ -9,7 +9,6 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
-  // Using HashRouter, so base can be relative
   base: './',
   build: {
     assetsDir: 'assets',
