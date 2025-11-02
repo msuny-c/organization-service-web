@@ -6,6 +6,7 @@ import { organizationsApi } from '../lib/api';
 import { getTypeName } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
+import Alert from '../components/Alert';
 
 export default function OrganizationsList() {
   const [search, setSearch] = useState('');
@@ -14,10 +15,22 @@ export default function OrganizationsList() {
   const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
+    return error?.response?.data?.error || error?.message || fallback;
+  };
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ['organizations', { search, page, sort, dir }],
     queryFn: () => organizationsApi.getAll({ search, page, size: 10, sort, dir }),
-    refetchInterval: 5000,
+    retry: false,
+    refetchInterval: (_data, query) => query.state.status === 'success' ? 5000 : false,
     refetchIntervalInBackground: true,
   });
 
@@ -93,6 +106,22 @@ export default function OrganizationsList() {
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
+      ) : isError ? (
+        <Alert type="error">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Не удалось загрузить список организаций: {getErrorMessage(error, 'Попробуйте повторить попытку позже.')}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? 'Повторная попытка...' : 'Повторить запрос'}
+            </Button>
+          </div>
+        </Alert>
       ) : (
         <>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
