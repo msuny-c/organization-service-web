@@ -149,53 +149,67 @@ export default function OrganizationForm() {
       case 'name':
         return value.trim() === '' ? 'Название обязательно' : null;
       
+      case 'fullName':
+        return value && value.trim() === '' ? 'Полное название не может состоять только из пробелов' : null;
+      
+      case 'type':
+        return value === '' ? 'Тип обязателен' : null;
+      
       case 'employeesCount':
-        if (value === '' || value === null || value === undefined) return null;
+        if (value === '' || value === null || value === undefined) return 'Количество сотрудников обязательно';
         if (isNaN(value) || !Number.isInteger(Number(value))) return 'Должно быть целым числом';
-        return value < 0 ? 'Не может быть отрицательным' : null;
+        return Number(value) < 0 ? 'Не может быть отрицательным' : null;
       
       case 'rating':
-        if (value === '' || value === null || value === undefined) return 'Рейтинг обязателен';
+        if (value === '' || value === null || value === undefined) return null;
         if (isNaN(value)) return 'Должно быть числом';
-        return value < 1 ? 'Рейтинг должен быть не менее 1' : null;
+        return Number(value) <= 0 ? 'Рейтинг должен быть больше 0' : null;
       
       case 'annualTurnover':
         if (value === '' || value === null || value === undefined) return null;
         if (isNaN(value)) return 'Должно быть числом';
-        return value < 1 ? 'Должен быть не менее 1' : null;
+        return Number(value) <= 0 ? 'Должен быть больше 0' : null;
       
       case 'coordinates.x':
-        if (!formDataContext.coordinatesId && value !== '' && value !== null && value !== undefined) {
-          if (isNaN(value)) return 'Должно быть числом';
-          return value > 882 ? 'X должен быть ≤ 882' : null;
+        if (!formDataContext.coordinatesId) {
+          if (value === '' || value === null || value === undefined) return 'X обязателен';
+          if (isNaN(value) || !Number.isInteger(Number(value))) return 'Должно быть целым числом';
         }
         return null;
       
       case 'coordinates.y':
-        if (!formDataContext.coordinatesId && value !== '' && value !== null && value !== undefined) {
-          if (isNaN(value)) return 'Должно быть числом';
-          return value <= -540 ? 'Y должен быть > -540' : null;
+        if (!formDataContext.coordinatesId) {
+          if (value === '' || value === null || value === undefined) return 'Y обязателен';
+          if (isNaN(value) || !Number.isInteger(Number(value))) return 'Должно быть целым числом';
         }
         return null;
       
       case 'postalAddress.town.x':
       case 'postalAddress.town.y':
-      case 'postalAddress.town.z':
       case 'officialAddress.town.x':
       case 'officialAddress.town.y':
+        if (value === '' || value === null || value === undefined) return null;
+        if (isNaN(value)) return 'Должно быть числом';
+        return Number.isInteger(Number(value)) ? null : 'Должно быть целым числом';
+      
+      case 'postalAddress.town.z':
       case 'officialAddress.town.z':
-        if (value !== '' && value !== null && value !== undefined) {
-          if (isNaN(value)) return 'Должно быть числом';
-        }
-        return null;
+        if (value === '' || value === null || value === undefined) return null;
+        return isNaN(value) ? 'Должно быть числом' : null;
+      
+      case 'postalAddress.town.name':
+      case 'officialAddress.town.name':
+        if (value === '' || value === null || value === undefined) return null;
+        return value.trim() === '' ? 'Название не может быть пустым' : null;
       
       case 'postalAddress.zipCode':
-        return !formDataContext.postalAddressId && value.length > 0 && value.length < 7 
+        if (formDataContext.postalAddressId) return null;
+        return value && value.length > 0 && value.length < 7 
           ? 'Минимум 7 символов' : null;
       
       case 'officialAddress.zipCode':
         return !formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId && 
-               value.length > 0 && value.length < 7 
+               value && value.length > 0 && value.length < 7 
           ? 'Минимум 7 символов' : null;
       
       default:
@@ -203,9 +217,119 @@ export default function OrganizationForm() {
     }
   };
 
+  const normalizeNumber = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    const num = Number(value);
+    return Number.isNaN(num) ? null : num;
+  };
+
+  const normalizeString = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    const trimmed = String(value).trim();
+    return trimmed === '' ? null : trimmed;
+  };
+
+  const buildLocationPayload = (location) => {
+    if (!location) return null;
+    const name = normalizeString(location.name);
+    const x = normalizeNumber(location.x);
+    const y = normalizeNumber(location.y);
+    const z = normalizeNumber(location.z);
+    if (name === null || x === null || y === null || z === null) {
+      return null;
+    }
+    return { name, x, y, z };
+  };
+
+  const buildAddressPayload = (address) => {
+    if (!address) return null;
+    const zipCode = normalizeString(address.zipCode);
+    const townId = normalizeNumber(address.townId);
+    const payload = {};
+    if (zipCode !== null) {
+      payload.zipCode = zipCode;
+    }
+    if (townId !== null) {
+      payload.townId = townId;
+      return payload;
+    }
+    const townPayload = buildLocationPayload(address.town);
+    if (!townPayload) {
+      return null;
+    }
+    payload.town = townPayload;
+    return payload;
+  };
+
+  const preparePayload = (data) => {
+    const employeesCount = normalizeNumber(data.employeesCount);
+    if (employeesCount === null) {
+      throw new Error('Количество сотрудников обязательно');
+    }
+    if (!Number.isInteger(employeesCount)) {
+      throw new Error('Количество сотрудников должно быть целым числом');
+    }
+    if (employeesCount < 0) {
+      throw new Error('Количество сотрудников не может быть отрицательным');
+    }
+
+    const typeValue = data.type || null;
+    if (!typeValue) {
+      throw new Error('Тип организации обязателен');
+    }
+
+    const payload = {
+      name: data.name.trim(),
+      fullName: normalizeString(data.fullName),
+      employeesCount,
+      rating: normalizeNumber(data.rating),
+      annualTurnover: normalizeNumber(data.annualTurnover),
+      type: typeValue,
+      coordinatesId: data.coordinatesId ? Number(data.coordinatesId) : null,
+      coordinates: null,
+      postalAddressId: data.postalAddressId ? Number(data.postalAddressId) : null,
+      postalAddress: null,
+      officialAddressId: data.reusePostalAddressAsOfficial ? null : (data.officialAddressId ? Number(data.officialAddressId) : null),
+      officialAddress: null,
+      reusePostalAddressAsOfficial: data.reusePostalAddressAsOfficial,
+    };
+
+    if (!payload.coordinatesId) {
+      const x = normalizeNumber(data.coordinates?.x);
+      const y = normalizeNumber(data.coordinates?.y);
+      if (x === null || y === null) {
+        throw new Error('Необходимо указать координаты');
+      }
+      payload.coordinates = { x, y };
+    }
+
+    if (!payload.postalAddressId) {
+      payload.postalAddress = buildAddressPayload(data.postalAddress);
+      if (!payload.postalAddress) {
+        throw new Error('Необходимо указать почтовый адрес и город');
+      }
+    }
+
+    if (payload.reusePostalAddressAsOfficial) {
+      payload.officialAddressId = payload.postalAddressId;
+      payload.officialAddress = null;
+    } else if (payload.officialAddressId) {
+      payload.officialAddress = null;
+    } else {
+      payload.officialAddress = buildAddressPayload(data.officialAddress);
+    }
+
+    return payload;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    try {
+      const payload = preparePayload(formData);
+      mutation.mutate(payload);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleChange = (e) => {
@@ -215,11 +339,9 @@ export default function OrganizationForm() {
     if (type === 'checkbox') {
       val = checked;
     } else if (type === 'number') {
-      // Для числовых полей: если значение пустое или невалидное, оставляем как строку для валидации
       if (value === '') {
         val = '';
       } else if (isNaN(value) || value.trim() === '') {
-        // Если введены буквы, не обновляем значение
         return;
       } else {
         val = Number(value);
@@ -359,7 +481,6 @@ export default function OrganizationForm() {
                 value={formData.rating}
                 onChange={handleChange}
                 error={errors.rating}
-                required
               />
               <Input
                 label="Годовой оборот"
@@ -376,6 +497,8 @@ export default function OrganizationForm() {
               name="type"
               value={formData.type}
               onChange={handleChange}
+              error={errors.type}
+              required
             >
               <option value="">Не указан</option>
               {Object.entries(ORGANIZATION_TYPES).map(([key, label]) => (
@@ -423,21 +546,20 @@ export default function OrganizationForm() {
             {!formData.coordinatesId && (
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="X (≤ 882)"
+                  label="X"
                   name="coordinates.x"
                   type="number"
-                  step="0.01"
-                  max="882"
+                  step="1"
                   value={formData.coordinates.x}
                   onChange={handleChange}
                   error={errors['coordinates.x']}
                   required
                 />
                 <Input
-                  label="Y (> -540)"
+                  label="Y"
                   name="coordinates.y"
                   type="number"
-                  min="-539"
+                  step="1"
                   value={formData.coordinates.y}
                   onChange={handleChange}
                   error={errors['coordinates.y']}
@@ -509,7 +631,6 @@ export default function OrganizationForm() {
                   value={formData.postalAddress.zipCode}
                   onChange={handleChange}
                   error={errors['postalAddress.zipCode']}
-                  required
                 />
                 <Select
                   label="Город"
@@ -536,6 +657,7 @@ export default function OrganizationForm() {
                         label="X"
                         name="postalAddress.town.x"
                         type="number"
+                        step="1"
                         value={formData.postalAddress.town.x}
                         onChange={handleChange}
                         error={errors['postalAddress.town.x']}
@@ -545,6 +667,7 @@ export default function OrganizationForm() {
                         label="Y"
                         name="postalAddress.town.y"
                         type="number"
+                        step="1"
                         value={formData.postalAddress.town.y}
                         onChange={handleChange}
                         error={errors['postalAddress.town.y']}
@@ -642,7 +765,6 @@ export default function OrganizationForm() {
                       value={formData.officialAddress.zipCode}
                       onChange={handleChange}
                       error={errors['officialAddress.zipCode']}
-                      required
                     />
                     <Select
                       label="Город"
@@ -662,26 +784,25 @@ export default function OrganizationForm() {
                           name="officialAddress.town.name"
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
-                          required
                         />
                         <div className="grid grid-cols-3 gap-4">
                           <Input
                             label="X"
                             name="officialAddress.town.x"
                             type="number"
+                            step="1"
                             value={formData.officialAddress.town.x}
                             onChange={handleChange}
                             error={errors['officialAddress.town.x']}
-                            required
                           />
                           <Input
                             label="Y"
                             name="officialAddress.town.y"
                             type="number"
+                            step="1"
                             value={formData.officialAddress.town.y}
                             onChange={handleChange}
                             error={errors['officialAddress.town.y']}
-                            required
                           />
                           <Input
                             label="Z"
@@ -691,7 +812,6 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.z}
                             onChange={handleChange}
                             error={errors['officialAddress.town.z']}
-                            required
                           />
                         </div>
                       </>
