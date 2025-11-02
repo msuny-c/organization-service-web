@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, Plus, ArrowUpDown } from 'lucide-react';
 import { organizationsApi } from '../lib/api';
-import { wsService } from '../lib/websocket';
 import { getTypeName } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
@@ -18,15 +17,9 @@ export default function OrganizationsList() {
   const { data, isLoading } = useQuery({
     queryKey: ['organizations', { search, page, sort, dir }],
     queryFn: () => organizationsApi.getAll({ search, page, size: 10, sort, dir }),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
-
-  useEffect(() => {
-    wsService.connect(() => {
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
-    });
-
-    return () => wsService.disconnect();
-  }, [queryClient]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
@@ -181,4 +174,3 @@ export default function OrganizationsList() {
     </div>
   );
 }
-

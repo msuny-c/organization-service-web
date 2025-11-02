@@ -33,5 +33,3 @@ export const referencesApi = {
   getTypes: () => api.get('/api/organizations/types'),
 };
 
-export const WS_URL = `${API_BASE_URL}/ws`;
-
