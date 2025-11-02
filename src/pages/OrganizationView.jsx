@@ -126,7 +126,11 @@ export default function OrganizationView() {
               />
               <InfoRow 
                 label="Рейтинг" 
-                value={<span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">{org.rating}</span>} 
+                value={
+                  org.rating != null
+                    ? <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">{org.rating}</span>
+                    : <span className="text-gray-500">—</span>
+                }
               />
               <InfoRow label="Годовой оборот" value={org.annualTurnover ? `${org.annualTurnover} ₽` : '—'} />
             </CardBody>
@@ -274,4 +278,3 @@ function InfoRow({ label, value }) {
     </div>
   );
 }
-

@@ -32,6 +32,7 @@ export default function OrganizationForm() {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
@@ -136,11 +137,12 @@ export default function OrganizationForm() {
   const mutation = useMutation({
     mutationFn: (data) => isEdit ? organizationsApi.update(id, data) : organizationsApi.create(data),
     onSuccess: () => {
+      setSubmitError(null);
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       navigate('/');
     },
     onError: (error) => {
-      alert('Ошибка: ' + (error.response?.data?.error || error.message));
+      setSubmitError(getErrorMessage(error, 'Не удалось сохранить организацию'));
     },
   });
 
@@ -217,6 +219,12 @@ export default function OrganizationForm() {
     }
   };
 
+  const createFieldError = (field, message) => {
+    const error = new Error(message);
+    error.field = field;
+    return error;
+  };
+
   const normalizeNumber = (value) => {
     if (value === '' || value === null || value === undefined) return null;
     const num = Number(value);
@@ -229,20 +237,44 @@ export default function OrganizationForm() {
     return trimmed === '' ? null : trimmed;
   };
 
-  const buildLocationPayload = (location) => {
-    if (!location) return null;
-    const name = normalizeString(location.name);
-    const x = normalizeNumber(location.x);
-    const y = normalizeNumber(location.y);
-    const z = normalizeNumber(location.z);
-    if (name === null || x === null || y === null || z === null) {
-      return null;
+  const buildLocationPayload = (location, prefix) => {
+    if (!location) {
+      throw createFieldError(`${prefix}.town.name`, 'Необходимо указать город');
     }
+    
+    const name = normalizeString(location.name);
+    if (name === null) {
+      throw createFieldError(`${prefix}.town.name`, 'Название не может быть пустым');
+    }
+    
+    const x = normalizeNumber(location.x);
+    if (x === null) {
+      throw createFieldError(`${prefix}.town.x`, 'X обязателен');
+    }
+    if (!Number.isInteger(x)) {
+      throw createFieldError(`${prefix}.town.x`, 'Должно быть целым числом');
+    }
+    
+    const y = normalizeNumber(location.y);
+    if (y === null) {
+      throw createFieldError(`${prefix}.town.y`, 'Y обязателен');
+    }
+    if (!Number.isInteger(y)) {
+      throw createFieldError(`${prefix}.town.y`, 'Должно быть целым числом');
+    }
+    
+    const z = normalizeNumber(location.z);
+    if (z === null) {
+      throw createFieldError(`${prefix}.town.z`, 'Z обязателен');
+    }
+    
     return { name, x, y, z };
   };
 
-  const buildAddressPayload = (address) => {
-    if (!address) return null;
+  const buildAddressPayload = (address, prefix) => {
+    if (!address) {
+      throw createFieldError(`${prefix}.zipCode`, 'Необходимо указать адрес');
+    }
     const zipCode = normalizeString(address.zipCode);
     const townId = normalizeNumber(address.townId);
     const payload = {};
@@ -253,29 +285,35 @@ export default function OrganizationForm() {
       payload.townId = townId;
       return payload;
     }
-    const townPayload = buildLocationPayload(address.town);
-    if (!townPayload) {
-      return null;
-    }
+    const townPayload = buildLocationPayload(address.town, prefix);
     payload.town = townPayload;
     return payload;
+  };
+
+  const getValueByPath = (data, path) => {
+    return path.split('.').reduce((acc, key) => {
+      if (acc === null || acc === undefined) {
+        return undefined;
+      }
+      return acc[key];
+    }, data);
   };
 
   const preparePayload = (data) => {
     const employeesCount = normalizeNumber(data.employeesCount);
     if (employeesCount === null) {
-      throw new Error('Количество сотрудников обязательно');
+      throw createFieldError('employeesCount', 'Количество сотрудников обязательно');
     }
     if (!Number.isInteger(employeesCount)) {
-      throw new Error('Количество сотрудников должно быть целым числом');
+      throw createFieldError('employeesCount', 'Количество сотрудников должно быть целым числом');
     }
     if (employeesCount < 0) {
-      throw new Error('Количество сотрудников не может быть отрицательным');
+      throw createFieldError('employeesCount', 'Количество сотрудников не может быть отрицательным');
     }
 
     const typeValue = data.type || null;
     if (!typeValue) {
-      throw new Error('Тип организации обязателен');
+      throw createFieldError('type', 'Тип организации обязателен');
     }
 
     const payload = {
@@ -296,18 +334,24 @@ export default function OrganizationForm() {
 
     if (!payload.coordinatesId) {
       const x = normalizeNumber(data.coordinates?.x);
+      if (x === null) {
+        throw createFieldError('coordinates.x', 'X обязателен');
+      }
+      if (!Number.isInteger(x)) {
+        throw createFieldError('coordinates.x', 'Должно быть целым числом');
+      }
       const y = normalizeNumber(data.coordinates?.y);
-      if (x === null || y === null) {
-        throw new Error('Необходимо указать координаты');
+      if (y === null) {
+        throw createFieldError('coordinates.y', 'Y обязателен');
+      }
+      if (!Number.isInteger(y)) {
+        throw createFieldError('coordinates.y', 'Должно быть целым числом');
       }
       payload.coordinates = { x, y };
     }
 
     if (!payload.postalAddressId) {
-      payload.postalAddress = buildAddressPayload(data.postalAddress);
-      if (!payload.postalAddress) {
-        throw new Error('Необходимо указать почтовый адрес и город');
-      }
+      payload.postalAddress = buildAddressPayload(data.postalAddress, 'postalAddress');
     }
 
     if (payload.reusePostalAddressAsOfficial) {
@@ -316,7 +360,18 @@ export default function OrganizationForm() {
     } else if (payload.officialAddressId) {
       payload.officialAddress = null;
     } else {
-      payload.officialAddress = buildAddressPayload(data.officialAddress);
+      const officialAddressData = data.officialAddress || {};
+      const hasOfficialData =
+        normalizeString(officialAddressData.zipCode) !== null ||
+        normalizeNumber(officialAddressData.townId) !== null ||
+        normalizeString(officialAddressData.town?.name) !== null ||
+        normalizeNumber(officialAddressData.town?.x) !== null ||
+        normalizeNumber(officialAddressData.town?.y) !== null ||
+        normalizeNumber(officialAddressData.town?.z) !== null;
+
+      payload.officialAddress = hasOfficialData
+        ? buildAddressPayload(officialAddressData, 'officialAddress')
+        : null;
     }
 
     return payload;
@@ -324,11 +379,74 @@ export default function OrganizationForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const fieldsToValidate = [
+      'name',
+      'fullName',
+      'type',
+      'employeesCount',
+      'rating',
+      'annualTurnover',
+      'coordinates.x',
+      'coordinates.y',
+      'postalAddress.zipCode',
+      'postalAddress.townId',
+      'postalAddress.town.name',
+      'postalAddress.town.x',
+      'postalAddress.town.y',
+      'postalAddress.town.z',
+      'officialAddress.zipCode',
+      'officialAddress.townId',
+      'officialAddress.town.name',
+      'officialAddress.town.x',
+      'officialAddress.town.y',
+      'officialAddress.town.z',
+    ];
+
+    const validationResults = {};
+    fieldsToValidate.forEach((field) => {
+      const value = getValueByPath(formData, field);
+      const message = validateField(field, value, formData);
+      if (message) {
+        validationResults[field] = message;
+      }
+    });
+
+    if (Object.keys(validationResults).length > 0) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        fieldsToValidate.forEach((field) => {
+          if (validationResults[field]) {
+            updated[field] = validationResults[field];
+          } else {
+            delete updated[field];
+          }
+        });
+        return updated;
+      });
+      setSubmitError('Пожалуйста, исправьте ошибки в форме.');
+      return;
+    }
+
+    setErrors((prev) => {
+      const updated = { ...prev };
+      fieldsToValidate.forEach((field) => {
+        delete updated[field];
+      });
+      return updated;
+    });
+
+    setSubmitError(null);
+
     try {
       const payload = preparePayload(formData);
       mutation.mutate(payload);
     } catch (err) {
-      alert(err.message);
+      if (err?.field) {
+        setErrors((prev) => ({ ...prev, [err.field]: err.message }));
+      } else {
+        setSubmitError(err.message || 'Неизвестная ошибка');
+      }
     }
   };
 
@@ -379,8 +497,8 @@ export default function OrganizationForm() {
     }
     
     setFormData(newFormData);
-    
-    // Валидация при изменении
+    setSubmitError(null);
+
     const error = validateField(name, val, newFormData);
     setErrors(prev => ({
       ...prev,
@@ -822,6 +940,10 @@ export default function OrganizationForm() {
             )}
           </CardBody>
         </Card>
+
+        {submitError && (
+          <p className="text-sm text-red-600 text-right">{submitError}</p>
+        )}
 
         <div className="flex justify-end gap-4">
           <Link to="/">
