@@ -1,12 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://9822f7b10732.ngrok-free.app';
+const API_BASE_URL = 'http://localhost:35000';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'any',
   },
 });
 
