@@ -6,6 +6,7 @@ import { organizationsApi } from '../lib/api';
 import { getTypeName } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
+import Alert from '../components/Alert';
 
 const SECTIONS = [
   { id: 'main', name: 'Основная информация', icon: Building2, color: 'blue' },
@@ -20,9 +21,24 @@ export default function OrganizationView() {
   const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = useState('main');
 
-  const { data, isLoading } = useQuery({
+  const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
+    if (error?.response?.status === 404) {
+      return 'Организация не найдена';
+    }
+    return error?.response?.data?.error || error?.message || fallback;
+  };
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['organization', id],
     queryFn: () => organizationsApi.getById(id),
+    retry: false,
   });
 
   const handleDelete = async () => {
@@ -40,6 +56,35 @@ export default function OrganizationView() {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Назад
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Карточка организации</h1>
+        </div>
+
+        <Alert type="error">
+          Не удалось загрузить данные организации: {getErrorMessage(error, 'Попробуйте повторить попытку позже.')}
+        </Alert>
+
+        <div className="flex gap-3">
+          <Button onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? 'Повторная попытка...' : 'Повторить запрос'}
+          </Button>
+          <Link to="/">
+            <Button variant="outline">К списку</Button>
+          </Link>
+        </div>
       </div>
     );
   }

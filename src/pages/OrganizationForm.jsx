@@ -7,6 +7,7 @@ import { ORGANIZATION_TYPES } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
 import Input, { Select } from '../components/Input';
+import Alert from '../components/Alert';
 
 export default function OrganizationForm() {
   const { id } = useParams();
@@ -32,10 +33,25 @@ export default function OrganizationForm() {
 
   const [errors, setErrors] = useState({});
 
-  const { data: orgData, isLoading: isLoadingOrg } = useQuery({
+  const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
+    if (error?.response?.status === 404) {
+      return 'Организация не найдена';
+    }
+    return error?.response?.data?.error || error?.message || fallback;
+  };
+
+  const {
+    data: orgData,
+    isLoading: isLoadingOrg,
+    isError: isOrgError,
+    error: orgError,
+    refetch: refetchOrg,
+    isFetching: isRefetchingOrg,
+  } = useQuery({
     queryKey: ['organization', id],
     queryFn: () => organizationsApi.getById(id),
     enabled: isEdit,
+    retry: false,
   });
 
   useEffect(() => {
@@ -80,19 +96,40 @@ export default function OrganizationForm() {
     }
   }, [isEdit, orgData]);
 
-  const { data: coordinatesData } = useQuery({
+  const {
+    data: coordinatesData,
+    isError: isCoordinatesError,
+    error: coordinatesError,
+    isFetching: isFetchingCoordinates,
+    refetch: refetchCoordinates,
+  } = useQuery({
     queryKey: ['coordinates'],
     queryFn: referencesApi.getCoordinates,
+    retry: false,
   });
 
-  const { data: addressesData } = useQuery({
+  const {
+    data: addressesData,
+    isError: isAddressesError,
+    error: addressesError,
+    isFetching: isFetchingAddresses,
+    refetch: refetchAddresses,
+  } = useQuery({
     queryKey: ['addresses'],
     queryFn: referencesApi.getAddresses,
+    retry: false,
   });
 
-  const { data: locationsData } = useQuery({
+  const {
+    data: locationsData,
+    isError: isLocationsError,
+    error: locationsError,
+    isFetching: isFetchingLocations,
+    refetch: refetchLocations,
+  } = useQuery({
     queryKey: ['locations'],
     queryFn: referencesApi.getLocations,
+    retry: false,
   });
 
 
@@ -238,6 +275,35 @@ export default function OrganizationForm() {
     );
   }
 
+  if (isEdit && isOrgError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Назад
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Редактирование организации</h1>
+        </div>
+
+        <Alert type="error">
+          Не удалось загрузить данные организации: {getErrorMessage(orgError, 'Попробуйте повторить попытку позже.')}
+        </Alert>
+
+        <div className="flex gap-3">
+          <Button onClick={() => refetchOrg()} disabled={isRefetchingOrg}>
+            {isRefetchingOrg ? 'Повторная попытка...' : 'Повторить запрос'}
+          </Button>
+          <Link to="/">
+            <Button variant="outline">К списку</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -324,6 +390,23 @@ export default function OrganizationForm() {
             <h2 className="text-lg font-semibold">Координаты</h2>
           </CardHeader>
           <CardBody className="space-y-4">
+            {isCoordinatesError && (
+              <Alert type="error">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    Не удалось загрузить список координат: {getErrorMessage(coordinatesError, 'Попробуйте обновить страницу.')}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchCoordinates()}
+                    disabled={isFetchingCoordinates}
+                  >
+                    {isFetchingCoordinates ? 'Повторная попытка...' : 'Повторить запрос'}
+                  </Button>
+                </div>
+              </Alert>
+            )}
             <Select
               label="Выбрать существующие"
               name="coordinatesId"
@@ -370,6 +453,40 @@ export default function OrganizationForm() {
             <h2 className="text-lg font-semibold">Почтовый адрес</h2>
           </CardHeader>
           <CardBody className="space-y-4">
+            {isAddressesError && (
+              <Alert type="error">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    Не удалось загрузить список адресов: {getErrorMessage(addressesError, 'Попробуйте повторить попытку позже.')}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchAddresses()}
+                    disabled={isFetchingAddresses}
+                  >
+                    {isFetchingAddresses ? 'Повторная попытка...' : 'Повторить запрос'}
+                  </Button>
+                </div>
+              </Alert>
+            )}
+            {isLocationsError && (
+              <Alert type="error">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    Не удалось загрузить список городов: {getErrorMessage(locationsError, 'Попробуйте обновить страницу.')}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchLocations()}
+                    disabled={isFetchingLocations}
+                  >
+                    {isFetchingLocations ? 'Повторная попытка...' : 'Повторить запрос'}
+                  </Button>
+                </div>
+              </Alert>
+            )}
             <Select
               label="Выбрать существующий"
               name="postalAddressId"
@@ -456,6 +573,40 @@ export default function OrganizationForm() {
             <h2 className="text-lg font-semibold">Официальный адрес</h2>
           </CardHeader>
           <CardBody className="space-y-4">
+            {isAddressesError && !formData.reusePostalAddressAsOfficial && (
+              <Alert type="error">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    Не удалось загрузить список адресов: {getErrorMessage(addressesError, 'Попробуйте повторить попытку позже.')}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchAddresses()}
+                    disabled={isFetchingAddresses}
+                  >
+                    {isFetchingAddresses ? 'Повторная попытка...' : 'Повторить запрос'}
+                  </Button>
+                </div>
+              </Alert>
+            )}
+            {isLocationsError && !formData.reusePostalAddressAsOfficial && (
+              <Alert type="error">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    Не удалось загрузить список городов: {getErrorMessage(locationsError, 'Попробуйте обновить страницу.')}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchLocations()}
+                    disabled={isFetchingLocations}
+                  >
+                    {isFetchingLocations ? 'Повторная попытка...' : 'Повторить запрос'}
+                  </Button>
+                </div>
+              </Alert>
+            )}
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -565,4 +716,3 @@ export default function OrganizationForm() {
     </div>
   );
 }
-
