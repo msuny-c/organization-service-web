@@ -190,7 +190,6 @@ export default function OrganizationView() {
       </div>
 
       <div className="flex gap-6">
-        {/* Sidebar */}
         <nav className="w-64 flex-shrink-0">
           <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1">
             {SECTIONS.map((section) => {
@@ -214,7 +213,6 @@ export default function OrganizationView() {
           </div>
         </nav>
 
-        {/* Content */}
         <div className="flex-1 max-w-3xl">
           {renderSection()}
         </div>

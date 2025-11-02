@@ -17,8 +17,8 @@ export default function OrganizationForm() {
   const [formData, setFormData] = useState({
     name: '',
     fullName: '',
-    employeesCount: 0,
-    rating: 1,
+    employeesCount: '',
+    rating: '',
     annualTurnover: '',
     type: '',
     coordinatesId: '',
@@ -44,9 +44,9 @@ export default function OrganizationForm() {
       setFormData({
         name: org.name || '',
         fullName: org.fullName || '',
-        employeesCount: org.employeesCount || 0,
-        rating: org.rating || 1,
-        annualTurnover: org.annualTurnover || '',
+        employeesCount: org.employeesCount ?? '',
+        rating: org.rating ?? '',
+        annualTurnover: org.annualTurnover ?? '',
         type: org.type || '',
         coordinatesId: org.coordinates?.id || '',
         coordinates: org.coordinates ? {
