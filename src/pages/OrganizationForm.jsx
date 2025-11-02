@@ -424,7 +424,6 @@ export default function OrganizationForm() {
         });
         return updated;
       });
-      setSubmitError('Пожалуйста, исправьте ошибки в форме.');
       return;
     }
 
