@@ -30,7 +30,7 @@ export default function OrganizationsList() {
     queryKey: ['organizations', { search, page, sort, dir }],
     queryFn: () => organizationsApi.getAll({ search, page, size: 10, sort, dir }),
     retry: false,
-    refetchInterval: (query) => (query.state.status === 'success' ? 5000 : false),
+    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
   });
 
