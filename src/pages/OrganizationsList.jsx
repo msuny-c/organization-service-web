@@ -10,10 +10,22 @@ import Alert from '../components/Alert';
 
 export default function OrganizationsList() {
   const [search, setSearch] = useState('');
+  const [searchField, setSearchField] = useState('all');
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState('id');
   const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
+  
+  const searchOptions = [
+    { value: 'name', label: 'Название' },
+    { value: 'fullName', label: 'Полное название' },
+  ];
+  
+  const placeholderByField = {
+    name: 'Поиск по названию',
+    fullName: 'Поиск по полному названию',
+  };
+  const searchPlaceholder = placeholderByField[searchField] || 'Поиск...';
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     return error?.response?.data?.error || error?.message || fallback;
@@ -27,8 +39,18 @@ export default function OrganizationsList() {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: ['organizations', { search, page, sort, dir }],
-    queryFn: () => organizationsApi.getAll({ search, page, size: 10, sort, dir }),
+    queryKey: ['organizations', { search, searchField, page, sort, dir }],
+    queryFn: () => {
+      const params = { page, size: 10, sort, dir };
+      const trimmedSearch = search.trim();
+      if (trimmedSearch) {
+        params.search = trimmedSearch;
+        if (searchField && searchField !== 'all') {
+          params.searchField = searchField;
+        }
+      }
+      return organizationsApi.getAll(params);
+    },
     retry: false,
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
@@ -97,15 +119,43 @@ export default function OrganizationsList() {
 
       <Card>
         <CardBody>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Поиск по названию..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
+                className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex flex-col md:w-64">
+              <label
+                htmlFor="search-field"
+                className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500"
+              >
+                Поле для поиска
+              </label>
+              <select
+                id="search-field"
+                value={searchField}
+                onChange={(e) => {
+                  setSearchField(e.target.value);
+                  setPage(0);
+                }}
+                className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                {searchOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </CardBody>
       </Card>
