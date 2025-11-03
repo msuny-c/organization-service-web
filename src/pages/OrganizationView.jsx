@@ -63,9 +63,9 @@ export default function OrganizationView() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
@@ -77,12 +77,14 @@ export default function OrganizationView() {
           Не удалось загрузить данные организации: {getErrorMessage(error, 'Попробуйте повторить попытку позже.')}
         </Alert>
 
-        <div className="flex gap-3">
-          <Button onClick={() => refetch()} disabled={isFetching}>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button onClick={() => refetch()} disabled={isFetching} className="w-full sm:w-auto">
             {isFetching ? 'Повторная попытка...' : 'Повторить запрос'}
           </Button>
-          <Link to="/">
-            <Button variant="outline">К списку</Button>
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              К списку
+            </Button>
           </Link>
         </div>
       </div>
@@ -211,54 +213,61 @@ export default function OrganizationView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
           </Link>
-          <div>
+          <div className="text-center sm:text-left">
             <h1 className="text-3xl font-bold text-gray-900">{org.name}</h1>
-            {org.fullName && <p className="text-sm text-gray-500 mt-1">{org.fullName}</p>}
+            {org.fullName && <p className="mt-1 text-sm text-gray-500">{org.fullName}</p>}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link to={`/organizations/${id}/edit`}>
-            <Button variant="outline">
+
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+          <Link to={`/organizations/${id}/edit`} className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Pencil className="h-4 w-4 mr-2" />
               Редактировать
             </Button>
           </Link>
-          <Button variant="danger" onClick={handleDelete}>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            className="w-full sm:w-auto"
+          >
             <Trash2 className="h-4 w-4 mr-2" />
             Удалить
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-6">
-        <nav className="w-64 flex-shrink-0">
-          <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1">
-            {SECTIONS.map((section) => {
-              const Icon = section.icon;
-              const isActive = selectedSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setSelectedSection(section.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors cursor-pointer
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <nav className="w-full lg:w-64 lg:flex-shrink-0">
+          <div className="bg-white rounded-lg border border-gray-200 p-2">
+            <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 sm:gap-2 lg:flex lg:flex-col">
+              {SECTIONS.map((section) => {
+                const Icon = section.icon;
+                const isActive = selectedSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setSelectedSection(section.id)}
+                    className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors cursor-pointer
                     ${isActive 
                       ? `bg-${section.color}-50 text-${section.color}-700 font-medium` 
                       : 'text-gray-700 hover:bg-gray-50'
                     }`}
-                >
-                  <Icon className={`h-5 w-5 ${isActive ? `text-${section.color}-600` : 'text-gray-400'}`} />
-                  <span className="text-sm">{section.name}</span>
-                </button>
-              );
-            })}
+                  >
+                    <Icon className={`h-5 w-5 ${isActive ? `text-${section.color}-600` : 'text-gray-400'}`} />
+                    <span className="text-sm">{section.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </nav>
 
@@ -272,9 +281,9 @@ export default function OrganizationView() {
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+    <div className="flex flex-col gap-1 py-2 border-b border-gray-100 last:border-0 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm font-medium text-gray-500">{label}:</span>
-      <span className="text-sm text-gray-900">{value}</span>
+      <span className="text-sm text-gray-900 text-left sm:text-right break-words">{value}</span>
     </div>
   );
 }

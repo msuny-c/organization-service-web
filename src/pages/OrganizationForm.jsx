@@ -517,9 +517,9 @@ export default function OrganizationForm() {
   if (isEdit && isOrgError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="outline" size="sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
@@ -531,12 +531,14 @@ export default function OrganizationForm() {
           Не удалось загрузить данные организации: {getErrorMessage(orgError, 'Попробуйте повторить попытку позже.')}
         </Alert>
 
-        <div className="flex gap-3">
-          <Button onClick={() => refetchOrg()} disabled={isRefetchingOrg}>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button onClick={() => refetchOrg()} disabled={isRefetchingOrg} className="w-full sm:w-auto">
             {isRefetchingOrg ? 'Повторная попытка...' : 'Повторить запрос'}
           </Button>
-          <Link to="/">
-            <Button variant="outline">К списку</Button>
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              К списку
+            </Button>
           </Link>
         </div>
       </div>
@@ -545,14 +547,14 @@ export default function OrganizationForm() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="outline" size="sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Назад
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-center text-3xl font-bold text-gray-900 sm:text-left">
           {isEdit ? 'Редактирование организации' : 'Создание организации'}
         </h1>
       </div>
@@ -661,7 +663,7 @@ export default function OrganizationForm() {
               ))}
             </Select>
             {!formData.coordinatesId && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
                   label="X"
                   name="coordinates.x"
@@ -769,7 +771,7 @@ export default function OrganizationForm() {
                       onChange={handleChange}
                       required
                     />
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <Input
                         label="X"
                         name="postalAddress.town.x"
@@ -902,7 +904,7 @@ export default function OrganizationForm() {
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
                         />
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <Input
                             label="X"
                             name="officialAddress.town.x"
@@ -941,14 +943,20 @@ export default function OrganizationForm() {
         </Card>
 
         {submitError && (
-          <p className="text-sm text-red-600 text-right">{submitError}</p>
+          <p className="text-sm text-red-600 text-center sm:text-right">{submitError}</p>
         )}
 
-        <div className="flex justify-end gap-4">
-          <Link to="/">
-            <Button variant="outline">Отмена</Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Link to="/" className="block w-full sm:inline-block sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              Отмена
+            </Button>
           </Link>
-          <Button type="submit" disabled={mutation.isPending}>
+          <Button
+            type="submit"
+            disabled={mutation.isPending}
+            className="w-full sm:w-auto"
+          >
             <Save className="h-4 w-4 mr-2" />
             {isEdit ? 'Сохранить' : 'Создать'}
           </Button>

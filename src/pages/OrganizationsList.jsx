@@ -59,28 +59,36 @@ export default function OrganizationsList() {
 
   const SortHeader = ({ field, children }) => (
     <th 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-      onClick={() => handleSort(field)}
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6"
+      aria-sort={
+        sort === field ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+      }
     >
-      <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className="flex items-center gap-1 text-nowrap uppercase text-gray-600 hover:text-gray-900 focus:outline-none"
+      >
         {children}
         <ArrowUpDown className="h-3 w-3" />
         {sort === field && (
           <span className="text-blue-600">{dir === 'asc' ? '↑' : '↓'}</span>
         )}
-      </div>
+      </button>
     </th>
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Организации</h1>
-          <p className="mt-1 text-sm text-gray-500">Управление всеми организациями системы</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Управление всеми организациями системы
+          </p>
         </div>
-        <Link to="/create">
-          <Button>
+        <Link to="/create" className="block w-full md:inline-block md:w-auto">
+          <Button className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Создать
           </Button>
@@ -124,72 +132,80 @@ export default function OrganizationsList() {
         </Alert>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <SortHeader field="id">ID</SortHeader>
-                  <SortHeader field="name">Название</SortHeader>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Координаты</th>
-                  <SortHeader field="employeesCount">Сотрудники</SortHeader>
-                  <SortHeader field="rating">Рейтинг</SortHeader>
-                  <SortHeader field="type">Тип</SortHeader>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {organizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{org.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{org.name}</div>
-                      {org.fullName && <div className="text-sm text-gray-500">{org.fullName}</div>}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {org.coordinates && `X: ${org.coordinates.x}, Y: ${org.coordinates.y}`}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                        {org.employeesCount}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {org.rating != null ? (
-                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
-                          {org.rating}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-500">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {getTypeName(org.type)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <Link to={`/organizations/${org.id}`}>
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/organizations/${org.id}/edit`}>
-                          <Button variant="outline" size="sm">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(org.id)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </td>
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <SortHeader field="id">ID</SortHeader>
+                    <SortHeader field="name">Название</SortHeader>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">
+                      Координаты
+                    </th>
+                    <SortHeader field="employeesCount">Сотрудники</SortHeader>
+                    <SortHeader field="rating">Рейтинг</SortHeader>
+                    <SortHeader field="type">Тип</SortHeader>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase sm:px-6">
+                      Действия
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {organizations.map((org) => (
+                    <tr key={org.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">
+                        {org.id}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap sm:px-6 sm:py-4">
+                        <div className="text-sm font-medium text-gray-900">{org.name}</div>
+                        {org.fullName && <div className="text-sm text-gray-500">{org.fullName}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap sm:px-6 sm:py-4">
+                        {org.coordinates && `X: ${org.coordinates.x}, Y: ${org.coordinates.y}`}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap sm:px-6 sm:py-4">
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                          {org.employeesCount}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap sm:px-6 sm:py-4">
+                        {org.rating != null ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                            {org.rating}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap sm:px-6 sm:py-4">
+                        {getTypeName(org.type)}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-right whitespace-nowrap sm:px-6 sm:py-4">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Link to={`/organizations/${org.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link to={`/organizations/${org.id}/edit`}>
+                            <Button variant="outline" size="sm">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(org.id)}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
               {Array.from({ length: totalPages }, (_, i) => (
                 <Button
                   key={i}
