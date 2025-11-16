@@ -58,6 +58,12 @@ export default function OrganizationForm() {
   useEffect(() => {
     if (isEdit && orgData?.data) {
       const org = orgData.data;
+      const reusePostalAddressAsOfficial =
+        org.reusePostalAddressAsOfficial ?? (
+          org.postalAddress?.id && org.officialAddress?.id
+            ? org.postalAddress.id === org.officialAddress.id
+            : false
+        );
       setFormData({
         name: org.name || '',
         fullName: org.fullName || '',
@@ -92,7 +98,7 @@ export default function OrganizationForm() {
             z: org.officialAddress.town.z ?? ''
           } : { name: '', x: '', y: '', z: '' }
         } : { zipCode: '', townId: '', town: { name: '', x: '', y: '', z: '' } },
-        reusePostalAddressAsOfficial: false,
+        reusePostalAddressAsOfficial,
       });
     }
   }, [isEdit, orgData]);
@@ -849,20 +855,18 @@ export default function OrganizationForm() {
                 </div>
               </Alert>
             )}
-            {!isEdit && (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="reusePostalAddressAsOfficial"
-                  checked={formData.reusePostalAddressAsOfficial}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                />
-                <span className="text-sm text-gray-700">Использовать тот же, что и почтовый</span>
-              </label>
-            )}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="reusePostalAddressAsOfficial"
+                checked={formData.reusePostalAddressAsOfficial}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="text-sm text-gray-700">Использовать тот же, что и почтовый</span>
+            </label>
 
-            {(isEdit || !formData.reusePostalAddressAsOfficial) && (
+            {!formData.reusePostalAddressAsOfficial && (
               <>
                 <Select
                   label="Выбрать существующий"
