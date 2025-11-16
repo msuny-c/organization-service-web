@@ -18,12 +18,12 @@ export const organizationsApi = {
 };
 
 export const operationsApi = {
-  findMinimalCoordinates: () => api.post('/operations/api/minimal-coordinates'),
-  groupByRating: () => api.post('/operations/api/group-by-rating'),
-  countByType: (type) => api.post(`/operations/api/count-by-type?type=${type}`),
-  dismissEmployees: (id) => api.post(`/operations/api/dismiss-employees?organizationId=${id}`),
+  findMinimalCoordinates: () => api.post('/api/operations/minimal-coordinates'),
+  groupByRating: () => api.post('/api/operations/group-by-rating'),
+  countByType: (type) => api.post(`/api/operations/count-by-type?type=${type}`),
+  dismissEmployees: (id) => api.post(`/api/operations/dismiss-employees?organizationId=${id}`),
   absorb: (absorbingId, absorbedId) => 
-    api.post(`/operations/api/absorb?absorbingId=${absorbingId}&absorbedId=${absorbedId}`),
+    api.post(`/api/operations/absorb?absorbingId=${absorbingId}&absorbedId=${absorbedId}`),
 };
 
 export const referencesApi = {
