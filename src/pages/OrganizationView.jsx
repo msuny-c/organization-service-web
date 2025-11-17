@@ -39,6 +39,8 @@ export default function OrganizationView() {
     queryKey: ['organization', id],
     queryFn: () => organizationsApi.getById(id),
     retry: false,
+    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
+    refetchIntervalInBackground: true,
   });
 
   const handleDelete = async () => {
