@@ -61,7 +61,7 @@ export default function OrganizationView() {
       navigate('/', {
         replace: true,
         state: {
-          removedOrganizationNotice: 'Организация была удалена другим пользователем. Мы вернули вас на главную.',
+          removedOrganizationNotice: 'Организация была удалена. Мы вернули вас на главную.',
         },
       });
     }

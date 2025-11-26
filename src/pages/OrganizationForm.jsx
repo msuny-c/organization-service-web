@@ -34,6 +34,7 @@ export default function OrganizationForm() {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [hadOrgData, setHadOrgData] = useState(false);
+  const [hasInitializedForm, setHasInitializedForm] = useState(false);
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
@@ -60,11 +61,13 @@ export default function OrganizationForm() {
 
   useEffect(() => {
     setHadOrgData(false);
+    setHasInitializedForm(false);
   }, [id]);
 
   useEffect(() => {
     if (isEdit && orgData?.data && String(orgData.data.id) === String(id)) {
       setHadOrgData(true);
+      if (hasInitializedForm) return;
       const org = orgData.data;
       const reusePostalAddressAsOfficial =
         org.reusePostalAddressAsOfficial ?? (
@@ -108,8 +111,9 @@ export default function OrganizationForm() {
         } : { zipCode: '', townId: '', town: { name: '', x: '', y: '', z: '' } },
         reusePostalAddressAsOfficial,
       });
+      setHasInitializedForm(true);
     }
-  }, [id, isEdit, orgData]);
+  }, [hasInitializedForm, id, isEdit, orgData]);
 
   useEffect(() => {
     if (isEdit && isOrgError && orgError?.response?.status === 404 && hadOrgData) {
