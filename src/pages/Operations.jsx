@@ -50,9 +50,18 @@ export default function Operations() {
   const [selectedOp, setSelectedOp] = useState('minimal');
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
+  const [countType, setCountType] = useState('');
+  const [dismissId, setDismissId] = useState('');
+  const [absorbingId, setAbsorbingId] = useState('');
+  const [absorbedId, setAbsorbedId] = useState('');
 
   const clearError = (key) => {
     setErrors(prev => ({ ...prev, [key]: null }));
+  };
+
+  const resolveAlert = (value) => {
+    if (!value) return null;
+    return typeof value === 'string' ? { message: value, type: 'error' } : value;
   };
 
   const minimalMutation = useMutation({
@@ -93,7 +102,7 @@ export default function Operations() {
     onSuccess: (data) => {
       setResults({ ...results, dismiss: { success: data.data.message } });
       clearError('dismiss');
-      document.getElementById('dismissId').value = '';
+      setDismissId('');
     },
     onError: (error) => {
       setErrors({ ...errors, dismiss: error.response?.data?.error || error.message });
@@ -105,8 +114,8 @@ export default function Operations() {
     onSuccess: (data) => {
       setResults({ ...results, absorb: { success: data.data.message } });
       clearError('absorb');
-      document.getElementById('absorbingId').value = '';
-      document.getElementById('absorbedId').value = '';
+      setAbsorbingId('');
+      setAbsorbedId('');
     },
     onError: (error) => {
       setErrors({ ...errors, absorb: error.response?.data?.error || error.message });
@@ -120,7 +129,8 @@ export default function Operations() {
     const Icon = operation.icon;
 
     switch (selectedOp) {
-      case 'minimal':
+      case 'minimal': {
+        const minimalError = resolveAlert(errors.minimal);
         return (
           <div className="space-y-6">
             <Card>
@@ -146,9 +156,9 @@ export default function Operations() {
               </CardBody>
             </Card>
 
-            {errors.minimal && (
-              <Alert type="error" onClose={() => clearError('minimal')}>
-                {errors.minimal}
+            {minimalError && (
+              <Alert type={minimalError.type} onClose={() => clearError('minimal')}>
+                {minimalError.message}
               </Alert>
             )}
 
@@ -177,8 +187,9 @@ export default function Operations() {
             )}
           </div>
         );
+      }
 
-      case 'rating':
+      case 'rating': {
         return (
           <div className="space-y-6">
             <Card>
@@ -227,8 +238,10 @@ export default function Operations() {
             )}
           </div>
         );
+      }
 
-      case 'count':
+      case 'count': {
+        const countError = resolveAlert(errors.count);
         return (
           <div className="space-y-6">
             <Card>
@@ -244,7 +257,14 @@ export default function Operations() {
                 </div>
               </CardHeader>
               <CardBody className="space-y-4">
-                <Select id="typeSelect">
+                <Select
+                  id="typeSelect"
+                  value={countType}
+                  onChange={(e) => {
+                    setCountType(e.target.value);
+                    clearError('count');
+                  }}
+                >
                   <option value="">Выберите тип...</option>
                   {Object.entries(ORGANIZATION_TYPES).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
@@ -252,8 +272,12 @@ export default function Operations() {
                 </Select>
                 <Button 
                   onClick={() => {
-                    const type = document.getElementById('typeSelect').value;
-                    if (type) countMutation.mutate(type);
+                    if (!countType) {
+                      setErrors({ ...errors, count: { message: 'Пожалуйста, выберите тип организации', type: 'warning' } });
+                      setResults({ ...results, count: null });
+                      return;
+                    }
+                    countMutation.mutate(countType);
                   }} 
                   disabled={countMutation.isPending}
                   className="w-full"
@@ -263,9 +287,9 @@ export default function Operations() {
               </CardBody>
             </Card>
 
-            {errors.count && (
-              <Alert type="error" onClose={() => clearError('count')}>
-                {errors.count}
+            {countError && (
+              <Alert type={countError.type} onClose={() => clearError('count')}>
+                {countError.message}
               </Alert>
             )}
 
@@ -284,8 +308,10 @@ export default function Operations() {
             )}
           </div>
         );
+      }
 
-      case 'dismiss':
+      case 'dismiss': {
+        const dismissError = resolveAlert(errors.dismiss);
         return (
           <div className="space-y-6">
             <Card>
@@ -307,12 +333,21 @@ export default function Operations() {
                   label="ID организации"
                   placeholder="Введите ID"
                   min="1"
+                  value={dismissId}
+                  onChange={(e) => {
+                    setDismissId(e.target.value);
+                    clearError('dismiss');
+                  }}
                 />
                 <Button 
                   variant="warning"
                   onClick={() => {
-                    const id = document.getElementById('dismissId').value;
-                    if (id) dismissMutation.mutate(id);
+                    if (!dismissId) {
+                      setErrors({ ...errors, dismiss: { message: 'Введите ID организации', type: 'warning' } });
+                      setResults({ ...results, dismiss: null });
+                      return;
+                    }
+                    dismissMutation.mutate(dismissId);
                   }} 
                   disabled={dismissMutation.isPending}
                   className="w-full"
@@ -322,9 +357,9 @@ export default function Operations() {
               </CardBody>
             </Card>
 
-            {errors.dismiss && (
-              <Alert type="error" onClose={() => clearError('dismiss')}>
-                {errors.dismiss}
+            {dismissError && (
+              <Alert type={dismissError.type} onClose={() => clearError('dismiss')}>
+                {dismissError.message}
               </Alert>
             )}
 
@@ -335,8 +370,10 @@ export default function Operations() {
             )}
           </div>
         );
+      }
 
-      case 'absorb':
+      case 'absorb': {
+        const absorbError = resolveAlert(errors.absorb);
         return (
           <div className="space-y-6">
             <Card>
@@ -359,6 +396,11 @@ export default function Operations() {
                     label="Поглощающая организация"
                     placeholder="ID"
                     min="1"
+                    value={absorbingId}
+                    onChange={(e) => {
+                      setAbsorbingId(e.target.value);
+                      clearError('absorb');
+                    }}
                   />
                   <Input 
                     id="absorbedId" 
@@ -366,32 +408,39 @@ export default function Operations() {
                     label="Поглощаемая организация"
                     placeholder="ID"
                     min="1"
+                    value={absorbedId}
+                    onChange={(e) => {
+                      setAbsorbedId(e.target.value);
+                      clearError('absorb');
+                    }}
                   />
                 </div>
                 <Button 
                   variant="danger"
                   onClick={() => {
-                    const absorbingId = document.getElementById('absorbingId').value;
-                    const absorbedId = document.getElementById('absorbedId').value;
-                    if (absorbingId && absorbedId) {
-                      if (absorbingId === absorbedId) {
-                        setErrors({ ...errors, absorb: 'Организация не может поглотить саму себя' });
-                        return;
-                      }
-                      absorbMutation.mutate({ absorbingId, absorbedId });
+                    if (!absorbingId || !absorbedId) {
+                      setErrors({ ...errors, absorb: { message: 'Укажите оба ID организаций', type: 'warning' } });
+                      setResults({ ...results, absorb: null });
+                      return;
                     }
+                    if (absorbingId === absorbedId) {
+                      setErrors({ ...errors, absorb: { message: 'Организация не может поглотить саму себя', type: 'error' } });
+                      setResults({ ...results, absorb: null });
+                      return;
+                    }
+                    absorbMutation.mutate({ absorbingId, absorbedId });
                   }} 
                   disabled={absorbMutation.isPending}
                   className="w-full"
                 >
                   Выполнить поглощение
                 </Button>
-              </CardBody>
+            </CardBody>
             </Card>
 
-            {errors.absorb && (
-              <Alert type="error" onClose={() => clearError('absorb')}>
-                {errors.absorb}
+            {absorbError && (
+              <Alert type={absorbError.type} onClose={() => clearError('absorb')}>
+                {absorbError.message}
               </Alert>
             )}
 
@@ -402,6 +451,7 @@ export default function Operations() {
             )}
           </div>
         );
+      }
 
       default:
         return null;

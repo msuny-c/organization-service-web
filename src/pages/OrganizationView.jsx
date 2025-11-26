@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil, Trash2, Building2, BarChart3, MapPin, Mail, FileText } from 'lucide-react';
@@ -20,6 +20,7 @@ export default function OrganizationView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedSection, setSelectedSection] = useState('main');
+  const [hadOrgData, setHadOrgData] = useState(false);
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
@@ -43,6 +44,29 @@ export default function OrganizationView() {
     refetchIntervalInBackground: true,
   });
 
+  const org = data?.data;
+
+  useEffect(() => {
+    setHadOrgData(false);
+  }, [id]);
+
+  useEffect(() => {
+    if (org && String(org.id) === String(id)) {
+      setHadOrgData(true);
+    }
+  }, [id, org]);
+
+  useEffect(() => {
+    if (isError && error?.response?.status === 404 && hadOrgData) {
+      navigate('/', {
+        replace: true,
+        state: {
+          removedOrganizationNotice: 'Организация была удалена другим пользователем. Мы вернули вас на главную.',
+        },
+      });
+    }
+  }, [error, hadOrgData, isError, navigate]);
+
   const handleDelete = async () => {
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
       try {
@@ -60,6 +84,10 @@ export default function OrganizationView() {
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  if (isError && error?.response?.status === 404 && hadOrgData) {
+    return null;
   }
 
   if (isError) {
@@ -92,8 +120,6 @@ export default function OrganizationView() {
       </div>
     );
   }
-
-  const org = data?.data;
 
   if (!org) {
     return <div>Организация не найдена</div>;

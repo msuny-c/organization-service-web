@@ -33,6 +33,7 @@ export default function OrganizationForm() {
 
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
+  const [hadOrgData, setHadOrgData] = useState(false);
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
@@ -53,10 +54,17 @@ export default function OrganizationForm() {
     queryFn: () => organizationsApi.getById(id),
     enabled: isEdit,
     retry: false,
+    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
+    refetchIntervalInBackground: true,
   });
 
   useEffect(() => {
-    if (isEdit && orgData?.data) {
+    setHadOrgData(false);
+  }, [id]);
+
+  useEffect(() => {
+    if (isEdit && orgData?.data && String(orgData.data.id) === String(id)) {
+      setHadOrgData(true);
       const org = orgData.data;
       const reusePostalAddressAsOfficial =
         org.reusePostalAddressAsOfficial ?? (
@@ -101,7 +109,18 @@ export default function OrganizationForm() {
         reusePostalAddressAsOfficial,
       });
     }
-  }, [isEdit, orgData]);
+  }, [id, isEdit, orgData]);
+
+  useEffect(() => {
+    if (isEdit && isOrgError && orgError?.response?.status === 404 && hadOrgData) {
+      navigate('/', {
+        replace: true,
+        state: {
+          removedOrganizationNotice: 'Организация была удалена другим пользователем. Редактирование недоступно.',
+        },
+      });
+    }
+  }, [hadOrgData, isEdit, isOrgError, navigate, orgError]);
 
   const {
     data: coordinatesData,
@@ -518,6 +537,10 @@ export default function OrganizationForm() {
         <p className="mt-4 text-gray-600">Загрузка данных организации...</p>
       </div>
     );
+  }
+
+  if (isEdit && isOrgError && orgError?.response?.status === 404 && hadOrgData) {
+    return null;
   }
 
   if (isEdit && isOrgError) {

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, Plus, ArrowUpDown } from 'lucide-react';
 import { organizationsApi } from '../lib/api';
 import { getTypeName } from '../lib/constants';
@@ -10,11 +10,21 @@ import Alert from '../components/Alert';
 
 export default function OrganizationsList() {
   const [search, setSearch] = useState('');
-  const [searchField, setSearchField] = useState('all');
+  const [searchField, setSearchField] = useState('name');
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState('id');
   const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [redirectNotice, setRedirectNotice] = useState(location.state?.removedOrganizationNotice || null);
+
+  useEffect(() => {
+    if (location.state?.removedOrganizationNotice) {
+      setRedirectNotice(location.state.removedOrganizationNotice);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
   
   const searchOptions = [
     { value: 'name', label: 'Название' },
@@ -45,9 +55,7 @@ export default function OrganizationsList() {
       const trimmedSearch = search.trim();
       if (trimmedSearch) {
         params.search = trimmedSearch;
-        if (searchField && searchField !== 'all') {
-          params.searchField = searchField;
-        }
+        params.searchField = searchField || 'name';
       }
       return organizationsApi.getAll(params);
     },
@@ -100,6 +108,10 @@ export default function OrganizationsList() {
     </th>
   );
 
+  const handleRowClick = (id) => {
+    navigate(`/organizations/${id}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -116,6 +128,12 @@ export default function OrganizationsList() {
           </Button>
         </Link>
       </div>
+
+      {redirectNotice && (
+        <Alert type="warning" onClose={() => setRedirectNotice(null)}>
+          {redirectNotice}
+        </Alert>
+      )}
 
       <Card>
         <CardBody>
@@ -202,7 +220,11 @@ export default function OrganizationsList() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {organizations.map((org) => (
-                    <tr key={org.id} className="hover:bg-gray-50">
+                    <tr
+                      key={org.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleRowClick(org.id)}
+                    >
                       <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">
                         {org.id}
                       </td>
@@ -232,17 +254,30 @@ export default function OrganizationsList() {
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-right whitespace-nowrap sm:px-6 sm:py-4">
                         <div className="flex flex-wrap justify-end gap-2">
-                          <Link to={`/organizations/${org.id}`}>
+                          <Link
+                            to={`/organizations/${org.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button variant="outline" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Link to={`/organizations/${org.id}/edit`}>
+                          <Link
+                            to={`/organizations/${org.id}/edit`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button variant="outline" size="sm">
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(org.id)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(org.id);
+                            }}
+                          >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
                         </div>
