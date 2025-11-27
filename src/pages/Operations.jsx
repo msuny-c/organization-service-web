@@ -190,6 +190,9 @@ export default function Operations() {
       }
 
       case 'rating': {
+        const ratingError = resolveAlert(errors.rating);
+        const ratingEntries = results.rating ? Object.entries(results.rating) : [];
+        const hasRatingData = ratingEntries.length > 0;
         return (
           <div className="space-y-6">
             <Card>
@@ -215,18 +218,27 @@ export default function Operations() {
               </CardBody>
             </Card>
 
-            {errors.rating && (
-              <Alert type="error" onClose={() => clearError('rating')}>
-                {errors.rating}
+            {ratingError && (
+              <Alert type={ratingError.type} onClose={() => clearError('rating')}>
+                {ratingError.message}
               </Alert>
             )}
 
-            {results.rating && !errors.rating && (
+            {results.rating && !ratingError && !hasRatingData && (
+              <Alert
+                type="warning"
+                onClose={() => setResults({ ...results, rating: null })}
+              >
+                Нет организаций для группировки по рейтингу
+              </Alert>
+            )}
+
+            {hasRatingData && !ratingError && (
               <Card className="border-yellow-200 bg-yellow-50">
                 <CardBody>
                   <h3 className="text-lg font-semibold text-yellow-900 mb-4">Статистика по рейтингам</h3>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                    {Object.entries(results.rating).map(([rating, count]) => (
+                    {ratingEntries.map(([rating, count]) => (
                       <div key={rating} className="bg-white rounded-lg p-4 text-center border border-yellow-200">
                         <div className="text-3xl font-bold text-yellow-600">{count}</div>
                         <div className="text-sm text-gray-600 mt-1">Рейтинг {rating}</div>
