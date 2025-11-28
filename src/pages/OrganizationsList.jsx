@@ -48,7 +48,12 @@ export default function OrganizationsList() {
   };
 
   const isAbortError = (err) => {
-    return err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED';
+    if (!err) return false;
+    if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+      return true;
+    }
+    const message = err.message?.toLowerCase() || '';
+    return message.includes('aborted') || message.includes('canceled');
   };
 
   const {
@@ -82,6 +87,8 @@ export default function OrganizationsList() {
       setDisplayTotalPages(data.data.totalPages || 0);
     }
   }, [isFetching, data]);
+
+  const showError = isError && error && !isAbortError(error);
 
   const handleDelete = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
@@ -201,7 +208,7 @@ export default function OrganizationsList() {
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      ) : isError && !isAbortError(error) ? (
+      ) : showError ? (
         <Alert type="error">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <span>
