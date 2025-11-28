@@ -66,6 +66,7 @@ export default function OrganizationsList() {
     retry: false,
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
+    keepPreviousData: true,
   });
 
   const handleDelete = async (id) => {
@@ -204,7 +205,15 @@ export default function OrganizationsList() {
         </Alert>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200">
+          <div className="bg-white rounded-lg border border-gray-200 relative">
+            {isFetching && !isLoading && (
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  Обновление...
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
