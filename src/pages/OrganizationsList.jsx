@@ -210,6 +210,8 @@ export default function OrganizationsList() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">
                       Координаты
                     </th>
+                    <SortHeader field="postalAddress.zipCode">Индекс</SortHeader>
+                    <SortHeader field="postalAddress.town.name">Город</SortHeader>
                     <SortHeader field="employeesCount">Сотрудники</SortHeader>
                     <SortHeader field="rating">Рейтинг</SortHeader>
                     <SortHeader field="type">Тип</SortHeader>
@@ -234,6 +236,12 @@ export default function OrganizationsList() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap sm:px-6 sm:py-4">
                         {org.coordinates && `X: ${org.coordinates.x}, Y: ${org.coordinates.y}`}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">
+                        {org.postalAddress?.zipCode || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">
+                        {org.postalAddress?.town?.name || '—'}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap sm:px-6 sm:py-4">
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
