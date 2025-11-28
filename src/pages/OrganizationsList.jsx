@@ -54,7 +54,6 @@ export default function OrganizationsList() {
     error,
     isFetching,
     refetch,
-    isPreviousData,
   } = useQuery({
     queryKey: ['organizations', { search, searchField, page, sort, dir }],
     queryFn: () => {
@@ -217,9 +216,6 @@ export default function OrganizationsList() {
       ) : (
         <>
           <div className="bg-white rounded-lg border border-gray-200">
-            {isFetching && !isPreviousData && (
-              <div className="px-4 py-2 text-sm text-gray-500">Обновляем данные...</div>
-            )}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
