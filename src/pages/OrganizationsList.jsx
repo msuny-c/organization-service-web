@@ -14,6 +14,8 @@ export default function OrganizationsList() {
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState('id');
   const [dir, setDir] = useState('asc');
+  const [displayOrganizations, setDisplayOrganizations] = useState([]);
+  const [displayTotalPages, setDisplayTotalPages] = useState(0);
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,6 +54,7 @@ export default function OrganizationsList() {
     error,
     isFetching,
     refetch,
+    isPreviousData,
   } = useQuery({
     queryKey: ['organizations', { search, searchField, page, sort, dir }],
     queryFn: () => {
@@ -66,7 +69,16 @@ export default function OrganizationsList() {
     retry: false,
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
+    keepPreviousData: true,
+    placeholderData: (prevData) => prevData,
   });
+
+  useEffect(() => {
+    if (!isFetching && data?.data) {
+      setDisplayOrganizations(data.data.content || []);
+      setDisplayTotalPages(data.data.totalPages || 0);
+    }
+  }, [isFetching, data]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
@@ -79,8 +91,8 @@ export default function OrganizationsList() {
     }
   };
 
-  const organizations = data?.data?.content || [];
-  const totalPages = data?.data?.totalPages || 0;
+  const organizations = displayOrganizations;
+  const totalPages = displayTotalPages;
 
   const handleSort = (field) => {
     if (sort === field) {
@@ -182,7 +194,7 @@ export default function OrganizationsList() {
         </CardBody>
       </Card>
 
-      {isLoading ? (
+      {isLoading && !data ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
@@ -205,6 +217,9 @@ export default function OrganizationsList() {
       ) : (
         <>
           <div className="bg-white rounded-lg border border-gray-200">
+            {isFetching && !isPreviousData && (
+              <div className="px-4 py-2 text-sm text-gray-500">Обновляем данные...</div>
+            )}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
