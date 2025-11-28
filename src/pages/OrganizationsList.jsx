@@ -29,11 +29,15 @@ export default function OrganizationsList() {
   const searchOptions = [
     { value: 'name', label: 'Название' },
     { value: 'fullName', label: 'Полное название' },
+    { value: 'postalAddress.zipCode', label: 'Индекс' },
+    { value: 'postalAddress.town.name', label: 'Город' },
   ];
   
   const placeholderByField = {
     name: 'Поиск по названию',
     fullName: 'Поиск по полному названию',
+    'postalAddress.zipCode': 'Поиск по индексу',
+    'postalAddress.town.name': 'Поиск по городу',
   };
   const searchPlaceholder = placeholderByField[searchField] || 'Поиск...';
 
