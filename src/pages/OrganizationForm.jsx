@@ -36,6 +36,10 @@ export default function OrganizationForm() {
   const [hadOrgData, setHadOrgData] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
 
+  const [initialCoordinates, setInitialCoordinates] = useState(null);
+  const [initialPostalAddress, setInitialPostalAddress] = useState(null);
+  const [initialOfficialAddress, setInitialOfficialAddress] = useState(null);
+
   const scrollToField = (field) => {
     if (!field || typeof document === 'undefined') return;
     const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(field) : field.replace(/"/g, '\\"');
@@ -87,7 +91,7 @@ export default function OrganizationForm() {
             ? org.postalAddress.id === org.officialAddress.id
             : false
         );
-      setFormData({
+      const nextFormData = {
         name: org.name || '',
         fullName: org.fullName || '',
         employeesCount: org.employeesCount ?? '',
@@ -122,7 +126,20 @@ export default function OrganizationForm() {
           } : { name: '', x: '', y: '', z: '' }
         } : { zipCode: '', townId: '', town: { name: '', x: '', y: '', z: '' } },
         reusePostalAddressAsOfficial,
-      });
+      };
+      setFormData(nextFormData);
+
+      setInitialCoordinates(nextFormData.coordinatesId ? { ...nextFormData.coordinates } : null);
+      setInitialPostalAddress(nextFormData.postalAddressId ? {
+        zipCode: nextFormData.postalAddress.zipCode,
+        townId: nextFormData.postalAddress.townId,
+        town: nextFormData.postalAddress.town ? { ...nextFormData.postalAddress.town } : null,
+      } : null);
+      setInitialOfficialAddress(nextFormData.officialAddressId ? {
+        zipCode: nextFormData.officialAddress.zipCode,
+        townId: nextFormData.officialAddress.townId,
+        town: nextFormData.officialAddress.town ? { ...nextFormData.officialAddress.town } : null,
+      } : null);
       setHasInitializedForm(true);
     }
   }, [hasInitializedForm, id, isEdit, orgData]);
@@ -392,33 +409,115 @@ export default function OrganizationForm() {
       reusePostalAddressAsOfficial: data.reusePostalAddressAsOfficial,
     };
 
-    if (!payload.coordinatesId) {
-      const x = normalizeNumber(data.coordinates?.x);
+    const currentCoordsX = normalizeNumber(data.coordinates?.x);
+    const currentCoordsY = normalizeNumber(data.coordinates?.y);
+
+    if (payload.coordinatesId) {
+      let isUpdated = false;
+      if (initialCoordinates) {
+        isUpdated =
+          Number(currentCoordsX) !== Number(initialCoordinates.x) ||
+          Number(currentCoordsY) !== Number(initialCoordinates.y);
+      } else if (currentCoordsX !== null || currentCoordsY !== null) {
+        isUpdated = true;
+      }
+
+      payload.coordinates = {
+        id: payload.coordinatesId,
+        x: currentCoordsX,
+        y: currentCoordsY,
+        isUpdated: !!isUpdated,
+      };
+    } else {
+      const x = currentCoordsX;
       if (x === null) {
         throw createFieldError('coordinates.x', 'X обязателен');
       }
       if (!Number.isInteger(x)) {
         throw createFieldError('coordinates.x', 'Должно быть целым числом');
       }
-      const y = normalizeNumber(data.coordinates?.y);
+      const y = currentCoordsY;
       if (y === null) {
         throw createFieldError('coordinates.y', 'Y обязателен');
       }
       if (!Number.isInteger(y)) {
         throw createFieldError('coordinates.y', 'Должно быть целым числом');
       }
-      payload.coordinates = { x, y };
+      payload.coordinates = { x, y, isUpdated: true };
     }
 
-    if (!payload.postalAddressId) {
-      payload.postalAddress = buildAddressPayload(data.postalAddress, 'postalAddress');
+    const buildAddressWithUpdated = (addressData, initialSnapshot, prefix) => {
+      if (!addressData) {
+        return null;
+      }
+      const basePayload = buildAddressPayload(addressData, prefix);
+
+      const currentZip = normalizeString(addressData.zipCode);
+      const currentTownId = normalizeNumber(addressData.townId);
+      const currentTown = addressData.town || {};
+
+      const initialZip = initialSnapshot ? normalizeString(initialSnapshot.zipCode) : null;
+      const initialTownId = initialSnapshot ? normalizeNumber(initialSnapshot.townId) : null;
+      const initialTown = initialSnapshot && initialSnapshot.town ? initialSnapshot.town : null;
+
+      let isUpdated = false;
+      if (initialSnapshot) {
+        const zipChanged = currentZip !== initialZip;
+        const townIdChanged = currentTownId !== initialTownId;
+        const townNameChanged =
+          (currentTown.name || '') !== (initialTown ? initialTown.name || '' : '');
+        const townXChanged =
+          normalizeNumber(currentTown.x) !== (initialTown ? normalizeNumber(initialTown.x) : null);
+        const townYChanged =
+          normalizeNumber(currentTown.y) !== (initialTown ? normalizeNumber(initialTown.y) : null);
+        const townZChanged =
+          normalizeNumber(currentTown.z) !== (initialTown ? normalizeNumber(initialTown.z) : null);
+
+        isUpdated = zipChanged || townIdChanged || townNameChanged || townXChanged || townYChanged || townZChanged;
+      } else {
+        isUpdated =
+          currentZip !== null ||
+          currentTownId !== null ||
+          normalizeString(currentTown.name) !== null ||
+          normalizeNumber(currentTown.x) !== null ||
+          normalizeNumber(currentTown.y) !== null ||
+          normalizeNumber(currentTown.z) !== null;
+      }
+
+      return { ...basePayload, isUpdated: !!isUpdated };
+    };
+
+    if (payload.postalAddressId) {
+      const addressPayload = buildAddressWithUpdated(data.postalAddress, initialPostalAddress, 'postalAddress');
+      payload.postalAddress = {
+        id: payload.postalAddressId,
+        ...addressPayload,
+      };
+    } else {
+      const addressPayload = buildAddressWithUpdated(data.postalAddress, null, 'postalAddress');
+      payload.postalAddress = addressPayload ? { ...addressPayload, isUpdated: true } : null;
     }
 
     if (payload.reusePostalAddressAsOfficial) {
       payload.officialAddressId = payload.postalAddressId;
       payload.officialAddress = null;
     } else if (payload.officialAddressId) {
-      payload.officialAddress = null;
+      const sameAsPostal =
+        payload.postalAddressId &&
+        payload.postalAddressId === payload.officialAddressId;
+
+      if (sameAsPostal) {
+        payload.officialAddress = {
+          id: payload.officialAddressId,
+          isUpdated: false,
+        };
+      } else {
+        const addressPayload = buildAddressWithUpdated(data.officialAddress, initialOfficialAddress, 'officialAddress');
+        payload.officialAddress = {
+          id: payload.officialAddressId,
+          ...addressPayload,
+        };
+      }
     } else {
       const officialAddressData = data.officialAddress || {};
       const hasOfficialData =
@@ -430,7 +529,7 @@ export default function OrganizationForm() {
         normalizeNumber(officialAddressData.town?.z) !== null;
 
       payload.officialAddress = hasOfficialData
-        ? buildAddressPayload(officialAddressData, 'officialAddress')
+        ? { ...buildAddressWithUpdated(officialAddressData, null, 'officialAddress'), isUpdated: true }
         : null;
     }
 
@@ -728,30 +827,28 @@ export default function OrganizationForm() {
                 </option>
               ))}
             </Select>
-            {!formData.coordinatesId && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input
-                  label="X"
-                  name="coordinates.x"
-                  type="number"
-                  step="1"
-                  value={formData.coordinates.x}
-                  onChange={handleChange}
-                  error={errors['coordinates.x']}
-                  required
-                />
-                <Input
-                  label="Y"
-                  name="coordinates.y"
-                  type="number"
-                  step="1"
-                  value={formData.coordinates.y}
-                  onChange={handleChange}
-                  error={errors['coordinates.y']}
-                  required
-                />
-              </div>
-            )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="X"
+                name="coordinates.x"
+                type="number"
+                step="1"
+                value={formData.coordinates.x}
+                onChange={handleChange}
+                error={errors['coordinates.x']}
+                required={!formData.coordinatesId}
+              />
+              <Input
+                label="Y"
+                name="coordinates.y"
+                type="number"
+                step="1"
+                value={formData.coordinates.y}
+                onChange={handleChange}
+                error={errors['coordinates.y']}
+                required={!formData.coordinatesId}
+              />
+            </div>
           </CardBody>
         </Card>
 
@@ -807,73 +904,71 @@ export default function OrganizationForm() {
                 </option>
               ))}
             </Select>
-            {!formData.postalAddressId && (
-              <>
-                <Input
-                  label="Почтовый индекс (≥ 7 символов)"
-                  name="postalAddress.zipCode"
-                  minLength="7"
-                  value={formData.postalAddress.zipCode}
-                  onChange={handleChange}
-                  error={errors['postalAddress.zipCode']}
-                />
-                <Select
-                  label="Город"
-                  name="postalAddress.townId"
-                  value={formData.postalAddress.townId}
-                  onChange={handleChange}
-                >
-                  <option value="">Создать новый...</option>
-                  {locationsData?.data?.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                  ))}
-                </Select>
-                {!formData.postalAddress.townId && (
-                  <>
+            <>
+              <Input
+                label="Почтовый индекс (≥ 7 символов)"
+                name="postalAddress.zipCode"
+                minLength="7"
+                value={formData.postalAddress.zipCode}
+                onChange={handleChange}
+                error={errors['postalAddress.zipCode']}
+              />
+              <Select
+                label="Город"
+                name="postalAddress.townId"
+                value={formData.postalAddress.townId}
+                onChange={handleChange}
+              >
+                <option value="">Создать новый...</option>
+                {locationsData?.data?.map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
+                ))}
+              </Select>
+              {!formData.postalAddress.townId && (
+                <>
+                  <Input
+                    label="Название города"
+                    name="postalAddress.town.name"
+                    value={formData.postalAddress.town.name}
+                    onChange={handleChange}
+                    error={errors['postalAddress.town.name']}
+                    required={!formData.postalAddressId}
+                  />
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <Input
-                      label="Название города"
-                      name="postalAddress.town.name"
-                      value={formData.postalAddress.town.name}
+                      label="X"
+                      name="postalAddress.town.x"
+                      type="number"
+                      step="1"
+                      value={formData.postalAddress.town.x}
                       onChange={handleChange}
-                      error={errors['postalAddress.town.name']}
-                      required
+                      error={errors['postalAddress.town.x']}
+                      required={!formData.postalAddressId}
                     />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <Input
-                        label="X"
-                        name="postalAddress.town.x"
-                        type="number"
-                        step="1"
-                        value={formData.postalAddress.town.x}
-                        onChange={handleChange}
-                        error={errors['postalAddress.town.x']}
-                        required
-                      />
-                      <Input
-                        label="Y"
-                        name="postalAddress.town.y"
-                        type="number"
-                        step="1"
-                        value={formData.postalAddress.town.y}
-                        onChange={handleChange}
-                        error={errors['postalAddress.town.y']}
-                        required
-                      />
-                      <Input
-                        label="Z"
-                        name="postalAddress.town.z"
-                        type="number"
-                        step="0.01"
-                        value={formData.postalAddress.town.z}
-                        onChange={handleChange}
-                        error={errors['postalAddress.town.z']}
-                        required
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
+                    <Input
+                      label="Y"
+                      name="postalAddress.town.y"
+                      type="number"
+                      step="1"
+                      value={formData.postalAddress.town.y}
+                      onChange={handleChange}
+                      error={errors['postalAddress.town.y']}
+                      required={!formData.postalAddressId}
+                    />
+                    <Input
+                      label="Z"
+                      name="postalAddress.town.z"
+                      type="number"
+                      step="0.01"
+                      value={formData.postalAddress.town.z}
+                      onChange={handleChange}
+                      error={errors['postalAddress.town.z']}
+                      required={!formData.postalAddressId}
+                    />
+                  </div>
+                </>
+              )}
+            </>
           </CardBody>
         </Card>
 
@@ -942,73 +1037,71 @@ export default function OrganizationForm() {
                     </option>
                   ))}
                 </Select>
-                {!formData.officialAddressId && (
-                  <>
-                    <Input
-                      label="Почтовый индекс (≥ 7 символов)"
-                      name="officialAddress.zipCode"
-                      minLength="7"
-                      value={formData.officialAddress.zipCode}
-                      onChange={handleChange}
-                      error={errors['officialAddress.zipCode']}
-                    />
-                    <Select
-                      label="Город"
-                      name="officialAddress.townId"
-                      value={formData.officialAddress.townId}
-                      onChange={handleChange}
-                    >
-                      <option value="">Создать новый...</option>
-                      {locationsData?.data?.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
-                      ))}
-                    </Select>
-                    {!formData.officialAddress.townId && (
-                      <>
+                <>
+                  <Input
+                    label="Почтовый индекс (≥ 7 символов)"
+                    name="officialAddress.zipCode"
+                    minLength="7"
+                    value={formData.officialAddress.zipCode}
+                    onChange={handleChange}
+                    error={errors['officialAddress.zipCode']}
+                  />
+                  <Select
+                    label="Город"
+                    name="officialAddress.townId"
+                    value={formData.officialAddress.townId}
+                    onChange={handleChange}
+                  >
+                    <option value="">Создать новый...</option>
+                    {locationsData?.data?.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </Select>
+                  {!formData.officialAddress.townId && (
+                    <>
+                      <Input
+                        label="Название города"
+                        name="officialAddress.town.name"
+                        value={formData.officialAddress.town.name}
+                        onChange={handleChange}
+                        error={errors['officialAddress.town.name']}
+                        required={!formData.officialAddressId}
+                      />
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <Input
-                          label="Название города"
-                          name="officialAddress.town.name"
-                          value={formData.officialAddress.town.name}
+                          label="X"
+                          name="officialAddress.town.x"
+                          type="number"
+                          step="1"
+                          value={formData.officialAddress.town.x}
                           onChange={handleChange}
-                          error={errors['officialAddress.town.name']}
-                          required
+                          error={errors['officialAddress.town.x']}
+                          required={!formData.officialAddressId}
                         />
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                          <Input
-                            label="X"
-                            name="officialAddress.town.x"
-                            type="number"
-                            step="1"
-                            value={formData.officialAddress.town.x}
-                            onChange={handleChange}
-                            error={errors['officialAddress.town.x']}
-                            required
-                          />
-                          <Input
-                            label="Y"
-                            name="officialAddress.town.y"
-                            type="number"
-                            step="1"
-                            value={formData.officialAddress.town.y}
-                            onChange={handleChange}
-                            error={errors['officialAddress.town.y']}
-                            required
-                          />
-                          <Input
-                            label="Z"
-                            name="officialAddress.town.z"
-                            type="number"
-                            step="0.01"
-                            value={formData.officialAddress.town.z}
-                            onChange={handleChange}
-                            error={errors['officialAddress.town.z']}
-                            required
-                          />
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
+                        <Input
+                          label="Y"
+                          name="officialAddress.town.y"
+                          type="number"
+                          step="1"
+                          value={formData.officialAddress.town.y}
+                          onChange={handleChange}
+                          error={errors['officialAddress.town.y']}
+                          required={!formData.officialAddressId}
+                        />
+                        <Input
+                          label="Z"
+                          name="officialAddress.town.z"
+                          type="number"
+                          step="0.01"
+                          value={formData.officialAddress.town.z}
+                          onChange={handleChange}
+                          error={errors['officialAddress.town.z']}
+                          required={!formData.officialAddressId}
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
               </>
             )}
           </CardBody>

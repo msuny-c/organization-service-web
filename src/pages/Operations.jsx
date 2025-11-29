@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { MapPin, BarChart3, Calculator, UserX, ArrowDownUp, TrendingUp } from 'lucide-react';
 import { operationsApi } from '../lib/api';
@@ -47,6 +48,7 @@ const OPERATIONS = [
 ];
 
 export default function Operations() {
+  const navigate = useNavigate();
   const [selectedOp, setSelectedOp] = useState('minimal');
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
@@ -181,6 +183,14 @@ export default function Operations() {
                         X: {results.minimal.coordinates?.x}, Y: {results.minimal.coordinates?.y}
                       </div>
                     </div>
+                  </div>
+                  <div className="mt-6 flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/organizations/${results.minimal.id}`)}
+                    >
+                      Открыть карточку
+                    </Button>
                   </div>
                 </CardBody>
               </Card>
