@@ -457,15 +457,20 @@ export default function OrganizationForm() {
       'annualTurnover',
       'coordinates.x',
       'coordinates.y',
-      'postalAddress.zipCode',
-      'postalAddress.townId',
-      'postalAddress.town.name',
-      'postalAddress.town.x',
-      'postalAddress.town.y',
-      'postalAddress.town.z',
     ];
 
-    if (formData.officialAddressId === 'create') {
+    if (!formData.postalAddressId) {
+      fieldsToValidate.push(
+        'postalAddress.zipCode',
+        'postalAddress.townId',
+        'postalAddress.town.name',
+        'postalAddress.town.x',
+        'postalAddress.town.y',
+        'postalAddress.town.z'
+      );
+    }
+
+    if (!formData.reusePostalAddressAsOfficial && formData.officialAddressId === 'create') {
       fieldsToValidate.push(
         'officialAddress.zipCode',
         'officialAddress.townId',
