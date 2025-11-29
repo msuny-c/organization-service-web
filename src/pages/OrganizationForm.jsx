@@ -36,6 +36,18 @@ export default function OrganizationForm() {
   const [hadOrgData, setHadOrgData] = useState(false);
   const [hasInitializedForm, setHasInitializedForm] = useState(false);
 
+  const scrollToField = (field) => {
+    if (!field || typeof document === 'undefined') return;
+    const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(field) : field.replace(/"/g, '\\"');
+    const target = document.querySelector(`[name="${escaped}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof target.focus === 'function') {
+        target.focus();
+      }
+    }
+  };
+
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
       return 'Организация не найдена';
@@ -228,10 +240,29 @@ export default function OrganizationForm() {
         if (value === '' || value === null || value === undefined) return null;
         return isNaN(value) ? 'Должно быть числом' : null;
       
-      case 'postalAddress.town.name':
-      case 'officialAddress.town.name':
-        if (value === '' || value === null || value === undefined) return null;
-        return value.trim() === '' ? 'Название не может быть пустым' : null;
+      case 'postalAddress.town.name': {
+        const requiresManualTown = !formDataContext.postalAddressId;
+        if (!requiresManualTown) {
+          if (value === '' || value === null || value === undefined) return null;
+          return value.trim() === '' ? 'Название не может быть пустым' : null;
+        }
+        if (value === '' || value === null || value === undefined) {
+          return 'Название города обязательно';
+        }
+        return value.trim() === '' ? 'Название города обязательно' : null;
+      }
+
+      case 'officialAddress.town.name': {
+        const requiresManualTown = !formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId;
+        if (!requiresManualTown) {
+          if (value === '' || value === null || value === undefined) return null;
+          return value.trim() === '' ? 'Название не может быть пустым' : null;
+        }
+        if (value === '' || value === null || value === undefined) {
+          return 'Название города обязательно';
+        }
+        return value.trim() === '' ? 'Название города обязательно' : null;
+      }
       
       case 'postalAddress.zipCode':
         if (formDataContext.postalAddressId) return null;
@@ -453,6 +484,8 @@ export default function OrganizationForm() {
         });
         return updated;
       });
+      const firstErrorField = fieldsToValidate.find((field) => validationResults[field]);
+      setTimeout(() => scrollToField(firstErrorField), 0);
       return;
     }
 
@@ -936,6 +969,7 @@ export default function OrganizationForm() {
                           name="officialAddress.town.name"
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
+                          required
                         />
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <Input
@@ -946,6 +980,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.x}
                             onChange={handleChange}
                             error={errors['officialAddress.town.x']}
+                            required
                           />
                           <Input
                             label="Y"
@@ -955,6 +990,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.y}
                             onChange={handleChange}
                             error={errors['officialAddress.town.y']}
+                            required
                           />
                           <Input
                             label="Z"
@@ -964,6 +1000,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.z}
                             onChange={handleChange}
                             error={errors['officialAddress.town.z']}
+                            required
                           />
                         </div>
                       </>
