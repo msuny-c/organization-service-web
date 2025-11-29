@@ -463,13 +463,18 @@ export default function OrganizationForm() {
       'postalAddress.town.x',
       'postalAddress.town.y',
       'postalAddress.town.z',
-      'officialAddress.zipCode',
-      'officialAddress.townId',
-      'officialAddress.town.name',
-      'officialAddress.town.x',
-      'officialAddress.town.y',
-      'officialAddress.town.z',
     ];
+
+    if (formData.officialAddressId === 'create') {
+      fieldsToValidate.push(
+        'officialAddress.zipCode',
+        'officialAddress.townId',
+        'officialAddress.town.name',
+        'officialAddress.town.x',
+        'officialAddress.town.y',
+        'officialAddress.town.z'
+      );
+    }
 
     const validationResults = {};
     fieldsToValidate.forEach((field) => {
