@@ -6,6 +6,15 @@ export default function Input({
   onChange,
   ...props 
 }) {
+  const handleKeyDown = (e) => {
+    if (props.type === 'number') {
+      const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End'];
+      if (!allowedKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleChange = (e) => {
     if (props.type === 'number') {
       let value = e.target.value.replace(/[^0-9.,-]/g, '');
@@ -44,6 +53,7 @@ export default function Input({
         className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           error ? 'border-red-500' : 'border-gray-300'
         }`}
+        onKeyDown={handleKeyDown}
         onChange={handleChange}
         {...props}
       />
