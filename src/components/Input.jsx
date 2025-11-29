@@ -12,8 +12,19 @@ export default function Input({
       const allowedKeys = isDecimalField 
         ? ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End']
         : ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End'];
+      
       if (!allowedKeys.includes(e.key)) {
         e.preventDefault();
+        return;
+      }
+      
+      if (isDecimalField && (e.key === '.' || e.key === ',')) {
+        const currentValue = e.target.value;
+        const hasDot = currentValue.includes('.') || currentValue.includes(',');
+        if (hasDot) {
+          e.preventDefault();
+          return;
+        }
       }
     }
   };
