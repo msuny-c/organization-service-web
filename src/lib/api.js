@@ -34,7 +34,7 @@ export const referencesApi = {
 };
 
 export const coordinatesApi = {
-  getAll: () => api.get('/api/coordinates'),
+  getAll: (params) => api.get('/api/coordinates', { params }),
   getById: (id) => api.get(`/api/coordinates/${id}`),
   create: (data) => api.post('/api/coordinates', data),
   update: (id, data) => api.put(`/api/coordinates/${id}`, data),
@@ -42,7 +42,7 @@ export const coordinatesApi = {
 };
 
 export const addressesApi = {
-  getAll: () => api.get('/api/addresses'),
+  getAll: (params) => api.get('/api/addresses', { params }),
   getById: (id) => api.get(`/api/addresses/${id}`),
   create: (data) => api.post('/api/addresses', data),
   update: (id, data) => api.put(`/api/addresses/${id}`, data),
@@ -50,7 +50,7 @@ export const addressesApi = {
 };
 
 export const locationsApi = {
-  getAll: () => api.get('/api/locations'),
+  getAll: (params) => api.get('/api/locations', { params }),
   getById: (id) => api.get(`/api/locations/${id}`),
   create: (data) => api.post('/api/locations', data),
   update: (id, data) => api.put(`/api/locations/${id}`, data),

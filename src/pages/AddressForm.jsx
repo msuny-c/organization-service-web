@@ -26,7 +26,7 @@ export default function AddressForm() {
 
   const locationsQuery = useQuery({
     queryKey: ['locations-for-address-form'],
-    queryFn: () => locationsApi.getAll(),
+    queryFn: () => locationsApi.getAll({ page: 0, size: 1000 }),
     retry: false,
   });
 
