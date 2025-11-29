@@ -27,6 +27,24 @@ export default function AddressesList() {
   };
   const searchPlaceholder = placeholderByField[searchField] || 'Поиск...';
 
+  const SortHeader = ({ field, children }) => (
+    <th 
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6"
+      aria-sort={
+        sort === field ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+      }
+    >
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className="flex items-center gap-1 text-nowrap uppercase text-gray-600 hover:text-gray-900 focus:outline-none"
+      >
+        {children}
+        <ArrowUpDown className="h-3 w-3" />
+      </button>
+    </th>
+  );
+
   const {
     data,
     isLoading,
@@ -102,29 +120,48 @@ export default function AddressesList() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-64"
-            />
+      <Card>
+        <CardBody>
+          <div className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
+                className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex flex-col md:w-64">
+              <label
+                htmlFor="search-field"
+                className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500"
+              >
+                Поле для поиска
+              </label>
+              <select
+                id="search-field"
+                value={searchField}
+                onChange={(e) => {
+                  setSearchField(e.target.value);
+                  setPage(0);
+                }}
+                className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                {searchOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <select
-            value={searchField}
-            onChange={(e) => { setSearchField(e.target.value); setPage(0); }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {searchOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {isLoading ? (
         <div className="text-center py-12">
@@ -150,21 +187,9 @@ export default function AddressesList() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">
-                    <button onClick={() => handleSort('id')} className="flex items-center gap-1 hover:text-gray-700">
-                      ID <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">
-                    <button onClick={() => handleSort('zipCode')} className="flex items-center gap-1 hover:text-gray-700">
-                      Индекс <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">
-                    <button onClick={() => handleSort('town.name')} className="flex items-center gap-1 hover:text-gray-700">
-                      Город <ArrowUpDown className="h-3 w-3" />
-                    </button>
-                  </th>
+                  <SortHeader field="id">ID</SortHeader>
+                  <SortHeader field="zipCode">Индекс</SortHeader>
+                  <SortHeader field="town.name">Город</SortHeader>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase sm:px-6">Действия</th>
                 </tr>
               </thead>
