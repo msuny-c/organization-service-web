@@ -5,6 +5,35 @@ export default function Input({
   className = '',
   ...props 
 }) {
+  const handleKeyPress = (e) => {
+    if (props.type === 'number') {
+      const char = String.fromCharCode(e.which);
+      if (!/[0-9.-]/.test(char) && e.which !== 8 && e.which !== 46) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleInput = (e) => {
+    if (props.type === 'number') {
+      e.target.value = e.target.value.replace(/[^0-9.-]/g, '');
+      
+      const parts = e.target.value.split('-');
+      if (parts.length > 2) {
+        e.target.value = '-' + parts.slice(1).join('');
+      }
+      
+      const decimalParts = e.target.value.split('.');
+      if (decimalParts.length > 2) {
+        e.target.value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+      }
+    }
+    
+    if (props.onChange) {
+      props.onChange(e);
+    }
+  };
+
   return (
     <div className={className}>
       {label && (
@@ -17,6 +46,8 @@ export default function Input({
         className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           error ? 'border-red-500' : 'border-gray-300'
         }`}
+        onKeyPress={handleKeyPress}
+        onInput={handleInput}
         {...props}
       />
       {error && (

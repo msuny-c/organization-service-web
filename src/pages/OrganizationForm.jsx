@@ -460,11 +460,9 @@ export default function OrganizationForm() {
       'coordinates.y',
     ];
 
-    // Валидация почтового адреса
     if (!formData.postalAddressId || formData.postalAddressId === '') {
       fieldsToValidate.push('postalAddress.zipCode');
       
-      // Поля города валидируются только если не выбрана существующая локация
       if (!formData.postalAddress.townId || formData.postalAddress.townId === '') {
         fieldsToValidate.push(
           'postalAddress.townId',
@@ -476,11 +474,9 @@ export default function OrganizationForm() {
       }
     }
 
-    // Валидация официального адреса
     if (!formData.reusePostalAddressAsOfficial && formData.officialAddressId === 'create') {
       fieldsToValidate.push('officialAddress.zipCode');
       
-      // Поля города валидируются только если не выбрана существующая локация
       if (!formData.officialAddress.townId || formData.officialAddress.townId === '') {
         fieldsToValidate.push(
           'officialAddress.townId',
