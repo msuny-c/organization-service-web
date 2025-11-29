@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { coordinatesApi } from '../lib/api';
 import Button from '../components/Button';
@@ -7,13 +8,17 @@ import Card, { CardBody } from '../components/Card';
 import Alert from '../components/Alert';
 
 export default function CoordinatesList() {
+  const [page, setPage] = useState(0);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['coordinates-list'],
-    queryFn: () => coordinatesApi.getAll(),
+    queryKey: ['coordinates', { page }],
+    queryFn: () => coordinatesApi.getAll({ page, size: 10 }),
     retry: false,
+    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
+    refetchIntervalInBackground: true,
+    keepPreviousData: true,
   });
 
   const handleDelete = async (id) => {
@@ -22,7 +27,7 @@ export default function CoordinatesList() {
     if (!confirm) return;
     try {
       await coordinatesApi.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['coordinates-list'] });
+      queryClient.invalidateQueries({ queryKey: ['coordinates'] });
     } catch (e) {
       const msg = e?.response?.data?.error || e?.message || 'Ошибка удаления';
       if (msg.includes('cascadeDelete=true')) {
@@ -30,7 +35,7 @@ export default function CoordinatesList() {
         if (cascade) {
           try {
             await coordinatesApi.delete(id, { cascadeDelete: true });
-            queryClient.invalidateQueries({ queryKey: ['coordinates-list'] });
+            queryClient.invalidateQueries({ queryKey: ['coordinates'] });
           } catch (e2) {
             alert(e2?.response?.data?.error || e2?.message || 'Ошибка каскадного удаления');
           }
@@ -41,7 +46,8 @@ export default function CoordinatesList() {
     }
   };
 
-  const coords = data?.data || [];
+  const totalPages = data?.data?.totalPages || 0;
+  const coords = Array.isArray(data?.data?.content) ? data.data.content : [];
 
   return (
     <div className="space-y-6">
@@ -115,6 +121,31 @@ export default function CoordinatesList() {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 0}
+                >
+                  Назад
+                </Button>
+                <span className="text-sm text-gray-700">
+                  Страница {page + 1} из {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= totalPages - 1}
+                >
+                  Вперед
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
