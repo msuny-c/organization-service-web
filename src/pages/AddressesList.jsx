@@ -41,6 +41,9 @@ export default function AddressesList() {
       >
         {children}
         <ArrowUpDown className="h-3 w-3" />
+        {sort === field && (
+          <span className="text-blue-600">{dir === 'asc' ? '↑' : '↓'}</span>
+        )}
       </button>
     </th>
   );
@@ -67,6 +70,7 @@ export default function AddressesList() {
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
     keepPreviousData: true,
+    placeholderData: (prevData) => prevData,
   });
 
   const handleDelete = async (id) => {

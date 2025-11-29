@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus, ArrowUpDown } from 'lucide-react';
 import { coordinatesApi } from '../lib/api';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
@@ -9,16 +9,50 @@ import Alert from '../components/Alert';
 
 export default function CoordinatesList() {
   const [page, setPage] = useState(0);
+  const [sort, setSort] = useState('id');
+  const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const SortHeader = ({ field, children }) => (
+    <th 
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6"
+      aria-sort={
+        sort === field ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+      }
+    >
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className="flex items-center gap-1 text-nowrap uppercase text-gray-600 hover:text-gray-900 focus:outline-none"
+      >
+        {children}
+        <ArrowUpDown className="h-3 w-3" />
+        {sort === field && (
+          <span className="text-blue-600">{dir === 'asc' ? '↑' : '↓'}</span>
+        )}
+      </button>
+    </th>
+  );
+
+  const handleSort = (field) => {
+    if (sort === field) {
+      setDir(dir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSort(field);
+      setDir('asc');
+    }
+    setPage(0);
+  };
+
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['coordinates', { page }],
-    queryFn: () => coordinatesApi.getAll({ page, size: 10 }),
+    queryKey: ['coordinates', { page, sort, dir }],
+    queryFn: () => coordinatesApi.getAll({ page, size: 10, sort: `${sort},${dir}` }),
     retry: false,
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
     keepPreviousData: true,
+    placeholderData: (prevData) => prevData,
   });
 
   const handleDelete = async (id) => {
@@ -86,7 +120,7 @@ export default function CoordinatesList() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">ID</th>
+                  <SortHeader field="id">ID</SortHeader>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">X</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sm:px-6">Y</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase sm:px-6">Действия</th>

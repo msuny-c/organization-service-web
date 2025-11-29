@@ -39,6 +39,9 @@ export default function LocationsList() {
       >
         {children}
         <ArrowUpDown className="h-3 w-3" />
+        {sort === field && (
+          <span className="text-blue-600">{dir === 'asc' ? '↑' : '↓'}</span>
+        )}
       </button>
     </th>
   );
@@ -65,6 +68,7 @@ export default function LocationsList() {
     refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
     refetchIntervalInBackground: true,
     keepPreviousData: true,
+    placeholderData: (prevData) => prevData,
   });
 
   const handleDelete = async (id) => {
