@@ -242,7 +242,8 @@ export default function OrganizationForm() {
         return isNaN(value) ? 'Должно быть числом' : null;
       
       case 'postalAddress.town.name': {
-        const requiresManualTown = !formDataContext.postalAddressId;
+        const requiresManualTown = (!formDataContext.postalAddressId || formDataContext.postalAddressId === '') && 
+                                   (!formDataContext.postalAddress.townId || formDataContext.postalAddress.townId === '');
         if (!requiresManualTown) {
           return null;
         }
@@ -253,7 +254,9 @@ export default function OrganizationForm() {
       }
 
       case 'officialAddress.town.name': {
-        const requiresManualTown = !formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId;
+        const requiresManualTown = (!formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId) ||
+                                   (formDataContext.officialAddressId === 'create' && 
+                                    (!formDataContext.officialAddress.townId || formDataContext.officialAddress.townId === ''));
         if (!requiresManualTown) {
           return null;
         }
@@ -457,26 +460,36 @@ export default function OrganizationForm() {
       'coordinates.y',
     ];
 
-    if (!formData.postalAddressId) {
-      fieldsToValidate.push(
-        'postalAddress.zipCode',
-        'postalAddress.townId',
-        'postalAddress.town.name',
-        'postalAddress.town.x',
-        'postalAddress.town.y',
-        'postalAddress.town.z'
-      );
+    // Валидация почтового адреса
+    if (!formData.postalAddressId || formData.postalAddressId === '') {
+      fieldsToValidate.push('postalAddress.zipCode');
+      
+      // Поля города валидируются только если не выбрана существующая локация
+      if (!formData.postalAddress.townId || formData.postalAddress.townId === '') {
+        fieldsToValidate.push(
+          'postalAddress.townId',
+          'postalAddress.town.name',
+          'postalAddress.town.x',
+          'postalAddress.town.y',
+          'postalAddress.town.z'
+        );
+      }
     }
 
+    // Валидация официального адреса
     if (!formData.reusePostalAddressAsOfficial && formData.officialAddressId === 'create') {
-      fieldsToValidate.push(
-        'officialAddress.zipCode',
-        'officialAddress.townId',
-        'officialAddress.town.name',
-        'officialAddress.town.x',
-        'officialAddress.town.y',
-        'officialAddress.town.z'
-      );
+      fieldsToValidate.push('officialAddress.zipCode');
+      
+      // Поля города валидируются только если не выбрана существующая локация
+      if (!formData.officialAddress.townId || formData.officialAddress.townId === '') {
+        fieldsToValidate.push(
+          'officialAddress.townId',
+          'officialAddress.town.name',
+          'officialAddress.town.x',
+          'officialAddress.town.y',
+          'officialAddress.town.z'
+        );
+      }
     }
 
     const validationResults = {};
