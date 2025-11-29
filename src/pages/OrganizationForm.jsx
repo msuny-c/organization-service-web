@@ -835,6 +835,7 @@ export default function OrganizationForm() {
                       name="postalAddress.town.name"
                       value={formData.postalAddress.town.name}
                       onChange={handleChange}
+                      error={errors['postalAddress.town.name']}
                       required
                     />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -969,6 +970,7 @@ export default function OrganizationForm() {
                           name="officialAddress.town.name"
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
+                          error={errors['officialAddress.town.name']}
                           required
                         />
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
