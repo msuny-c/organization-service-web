@@ -3,9 +3,10 @@ export default function Input({
   error, 
   required,
   className = '',
+  onChange,
   ...props 
 }) {
-  const handleInput = (e) => {
+  const handleChange = (e) => {
     if (props.type === 'number') {
       let value = e.target.value.replace(/[^0-9.,-]/g, '');
       
@@ -21,11 +22,13 @@ export default function Input({
       
       value = value.replace(',', '.');
       
-      e.target.value = value;
+      if (e.target.value !== value) {
+        e.target.value = value;
+      }
     }
     
-    if (props.onChange) {
-      props.onChange(e);
+    if (onChange) {
+      onChange(e);
     }
   };
 
@@ -41,7 +44,7 @@ export default function Input({
         className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           error ? 'border-red-500' : 'border-gray-300'
         }`}
-        onInput={handleInput}
+        onChange={handleChange}
         {...props}
       />
       {error && (
