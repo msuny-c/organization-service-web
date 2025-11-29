@@ -244,8 +244,7 @@ export default function OrganizationForm() {
       case 'postalAddress.town.name': {
         const requiresManualTown = !formDataContext.postalAddressId;
         if (!requiresManualTown) {
-          if (value === '' || value === null || value === undefined) return null;
-          return value.trim() === '' ? 'Название не может быть пустым' : null;
+          return null;
         }
         if (value === '' || value === null || value === undefined) {
           return 'Название города обязательно';
@@ -256,8 +255,7 @@ export default function OrganizationForm() {
       case 'officialAddress.town.name': {
         const requiresManualTown = !formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId;
         if (!requiresManualTown) {
-          if (value === '' || value === null || value === undefined) return null;
-          return value.trim() === '' ? 'Название не может быть пустым' : null;
+          return null;
         }
         if (value === '' || value === null || value === undefined) {
           return 'Название города обязательно';
