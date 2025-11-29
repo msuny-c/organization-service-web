@@ -27,8 +27,32 @@ export const operationsApi = {
 };
 
 export const referencesApi = {
-  getCoordinates: () => api.get('/api/organizations/coordinates'),
-  getAddresses: () => api.get('/api/organizations/addresses'),
-  getLocations: () => api.get('/api/organizations/locations'),
+  getCoordinates: () => api.get('/api/coordinates'),
+  getAddresses: () => api.get('/api/addresses'),
+  getLocations: () => api.get('/api/locations'),
   getTypes: () => api.get('/api/organizations/types'),
+};
+
+export const coordinatesApi = {
+  getAll: () => api.get('/api/coordinates'),
+  getById: (id) => api.get(`/api/coordinates/${id}`),
+  create: (data) => api.post('/api/coordinates', data),
+  update: (id, data) => api.put(`/api/coordinates/${id}`, data),
+  delete: (id) => api.delete(`/api/coordinates/${id}`),
+};
+
+export const addressesApi = {
+  getAll: () => api.get('/api/addresses'),
+  getById: (id) => api.get(`/api/addresses/${id}`),
+  create: (data) => api.post('/api/addresses', data),
+  update: (id, data) => api.put(`/api/addresses/${id}`, data),
+  delete: (id) => api.delete(`/api/addresses/${id}`),
+};
+
+export const locationsApi = {
+  getAll: () => api.get('/api/locations'),
+  getById: (id) => api.get(`/api/locations/${id}`),
+  create: (data) => api.post('/api/locations', data),
+  update: (id, data) => api.put(`/api/locations/${id}`, data),
+  delete: (id) => api.delete(`/api/locations/${id}`),
 };

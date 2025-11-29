@@ -5,6 +5,12 @@ import OrganizationsList from './pages/OrganizationsList';
 import OrganizationView from './pages/OrganizationView';
 import OrganizationForm from './pages/OrganizationForm';
 import Operations from './pages/Operations';
+import CoordinatesList from './pages/CoordinatesList';
+import AddressesList from './pages/AddressesList';
+import LocationsList from './pages/LocationsList';
+import CoordinateForm from './pages/CoordinateForm';
+import AddressForm from './pages/AddressForm';
+import LocationForm from './pages/LocationForm';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +33,15 @@ function App() {
             <Route path="organizations/:id" element={<OrganizationView />} />
             <Route path="organizations/:id/edit" element={<OrganizationForm />} />
             <Route path="operations" element={<Operations />} />
+            <Route path="coordinates" element={<CoordinatesList />} />
+            <Route path="coordinates/create" element={<CoordinateForm />} />
+            <Route path="coordinates/:id/edit" element={<CoordinateForm />} />
+            <Route path="addresses" element={<AddressesList />} />
+            <Route path="addresses/create" element={<AddressForm />} />
+            <Route path="addresses/:id/edit" element={<AddressForm />} />
+            <Route path="locations" element={<LocationsList />} />
+            <Route path="locations/create" element={<LocationForm />} />
+            <Route path="locations/:id/edit" element={<LocationForm />} />
           </Route>
         </Routes>
       </HashRouter>

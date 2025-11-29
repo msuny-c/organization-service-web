@@ -4,6 +4,9 @@ import { Building2, Menu, Settings, X } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Список' },
+  { to: '/coordinates', label: 'Координаты' },
+  { to: '/addresses', label: 'Адреса' },
+  { to: '/locations', label: 'Локации' },
   { to: '/operations', label: 'Операции', icon: Settings },
 ];
 
