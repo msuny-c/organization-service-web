@@ -110,7 +110,7 @@ export default function OrganizationForm() {
             z: org.postalAddress.town.z ?? ''
           } : { name: '', x: '', y: '', z: '' }
         } : { zipCode: '', townId: '', town: { name: '', x: '', y: '', z: '' } },
-        officialAddressId: org.officialAddress?.id || '',
+        officialAddressId: org.officialAddress?.id ? String(org.officialAddress.id) : '',
         officialAddress: org.officialAddress ? {
           zipCode: org.officialAddress.zipCode || '',
           townId: org.officialAddress.town?.id || '',
@@ -421,9 +421,7 @@ export default function OrganizationForm() {
     if (payload.reusePostalAddressAsOfficial) {
       payload.officialAddressId = payload.postalAddressId;
       payload.officialAddress = null;
-    } else if (payload.officialAddressId) {
-      payload.officialAddress = null;
-    } else {
+    } else if (payload.officialAddressId === 'create') {
       const officialAddressData = data.officialAddress || {};
       const hasOfficialData =
         normalizeString(officialAddressData.zipCode) !== null ||
@@ -436,6 +434,12 @@ export default function OrganizationForm() {
       payload.officialAddress = hasOfficialData
         ? buildAddressPayload(officialAddressData, 'officialAddress')
         : null;
+      payload.officialAddressId = null;
+    } else if (payload.officialAddressId) {
+      payload.officialAddress = null;
+    } else {
+      payload.officialAddress = null;
+      payload.officialAddressId = null;
     }
 
     return payload;
@@ -939,14 +943,15 @@ export default function OrganizationForm() {
                   value={formData.officialAddressId}
                   onChange={handleChange}
                 >
-                  <option value="">Создать новый...</option>
+                  <option value="">Не заполнено</option>
+                  <option value="create">Создать новый...</option>
                   {addressesData?.data?.map(addr => (
                     <option key={addr.id} value={addr.id}>
                       {addr.zipCode} - {addr.town?.name}
                     </option>
                   ))}
                 </Select>
-                {!formData.officialAddressId && (
+                {formData.officialAddressId === 'create' && (
                   <>
                     <Input
                       label="Почтовый индекс (≥ 7 символов)"
@@ -975,7 +980,6 @@ export default function OrganizationForm() {
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
                           error={errors['officialAddress.town.name']}
-                          required
                         />
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <Input
@@ -986,7 +990,6 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.x}
                             onChange={handleChange}
                             error={errors['officialAddress.town.x']}
-                            required
                           />
                           <Input
                             label="Y"
@@ -996,7 +999,6 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.y}
                             onChange={handleChange}
                             error={errors['officialAddress.town.y']}
-                            required
                           />
                           <Input
                             label="Z"
@@ -1006,7 +1008,6 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.z}
                             onChange={handleChange}
                             error={errors['officialAddress.town.z']}
-                            required
                           />
                         </div>
                       </>
