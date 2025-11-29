@@ -30,12 +30,14 @@ export default function Input({
       }
       
       if (isDecimalField) {
-        const decimalParts = value.split(/[.,]/);
-        if (decimalParts.length > 2) {
-          value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
-        }
-        
         value = value.replace(',', '.');
+        
+        const dotIndex = value.indexOf('.');
+        if (dotIndex !== -1) {
+          const beforeDot = value.substring(0, dotIndex + 1);
+          const afterDot = value.substring(dotIndex + 1).replace(/\./g, '');
+          value = beforeDot + afterDot;
+        }
       }
       
       if (e.target.value !== value) {
