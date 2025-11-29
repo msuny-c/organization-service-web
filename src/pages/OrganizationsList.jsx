@@ -66,7 +66,7 @@ export default function OrganizationsList() {
   } = useQuery({
     queryKey: ['organizations', { search, searchField, page, sort, dir }],
     queryFn: () => {
-      const params = { page, size: 10, sort, dir };
+      const params = { page, size: 10, sort: `${sort},${dir}` };
       const trimmedSearch = search.trim();
       if (trimmedSearch) {
         params.search = trimmedSearch;
