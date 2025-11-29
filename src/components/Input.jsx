@@ -7,8 +7,8 @@ export default function Input({
 }) {
   const handleKeyPress = (e) => {
     if (props.type === 'number') {
-      const char = String.fromCharCode(e.which);
-      if (!/[0-9.-]/.test(char) && e.which !== 8 && e.which !== 46) {
+      const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'];
+      if (!allowedKeys.includes(e.key)) {
         e.preventDefault();
       }
     }
@@ -16,17 +16,21 @@ export default function Input({
 
   const handleInput = (e) => {
     if (props.type === 'number') {
-      e.target.value = e.target.value.replace(/[^0-9.-]/g, '');
+      let value = e.target.value.replace(/[^0-9.,-]/g, '');
       
-      const parts = e.target.value.split('-');
+      const parts = value.split('-');
       if (parts.length > 2) {
-        e.target.value = '-' + parts.slice(1).join('');
+        value = '-' + parts.slice(1).join('');
       }
       
-      const decimalParts = e.target.value.split('.');
+      const decimalParts = value.split(/[.,]/);
       if (decimalParts.length > 2) {
-        e.target.value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+        value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
       }
+      
+      value = value.replace(',', '.');
+      
+      e.target.value = value;
     }
     
     if (props.onChange) {
