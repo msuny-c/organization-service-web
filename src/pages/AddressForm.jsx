@@ -81,7 +81,7 @@ export default function AddressForm() {
     );
   }
 
-  const locations = locationsQuery.data?.data || [];
+  const locations = Array.isArray(locationsQuery.data?.data?.content) ? locationsQuery.data.data.content : [];
 
   return (
     <div className="space-y-6">

@@ -735,11 +735,11 @@ export default function OrganizationForm() {
               onChange={handleChange}
             >
               <option value="">Создать новые...</option>
-              {coordinatesData?.data?.map(coord => (
+              {Array.isArray(coordinatesData?.data?.content) ? coordinatesData.data.content.map(coord => (
                 <option key={coord.id} value={coord.id}>
                   X: {coord.x}, Y: {coord.y}
                 </option>
-              ))}
+              )) : null}
             </Select>
             {!formData.coordinatesId && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -814,11 +814,11 @@ export default function OrganizationForm() {
               onChange={handleChange}
             >
               <option value="">Создать новый...</option>
-              {addressesData?.data?.map(addr => (
+              {Array.isArray(addressesData?.data?.content) ? addressesData.data.content.map(addr => (
                 <option key={addr.id} value={addr.id}>
                   {addr.zipCode} - {addr.town?.name}
                 </option>
-              ))}
+              )) : null}
             </Select>
             {!formData.postalAddressId && (
               <>
@@ -831,15 +831,15 @@ export default function OrganizationForm() {
                   error={errors['postalAddress.zipCode']}
                 />
                 <Select
-                  label="Город"
+                  label="Выбрать существующий"
                   name="postalAddress.townId"
                   value={formData.postalAddress.townId}
                   onChange={handleChange}
                 >
                   <option value="">Создать новый...</option>
-                  {locationsData?.data?.map(loc => (
+                  {Array.isArray(locationsData?.data?.content) ? locationsData.data.content.map(loc => (
                     <option key={loc.id} value={loc.id}>{loc.name}</option>
-                  ))}
+                  )) : null}
                 </Select>
                 {!formData.postalAddress.townId && (
                   <>
@@ -943,18 +943,18 @@ export default function OrganizationForm() {
             {!formData.reusePostalAddressAsOfficial && (
               <>
                 <Select
-                  label="Выбрать существующий"
+                  label="Официальный адрес"
                   name="officialAddressId"
                   value={formData.officialAddressId}
                   onChange={handleChange}
                 >
                   <option value="">Не заполнено</option>
                   <option value="create">Создать новый...</option>
-                  {addressesData?.data?.map(addr => (
-                    <option key={addr.id} value={addr.id}>
-                      {addr.zipCode} - {addr.town?.name}
-                    </option>
-                  ))}
+                  {Array.isArray(addressesData?.data?.content) && addressesData.data.content.map(addr => (
+                  <option key={addr.id} value={addr.id}>
+                    {addr.zipCode} - {addr.town?.name}
+                  </option>
+                ))}
                 </Select>
                 {formData.officialAddressId === 'create' && (
                   <>
@@ -973,9 +973,9 @@ export default function OrganizationForm() {
                       onChange={handleChange}
                     >
                       <option value="">Создать новый...</option>
-                      {locationsData?.data?.map(loc => (
+                      {Array.isArray(locationsData?.data?.content) ? locationsData.data.content.map(loc => (
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
-                      ))}
+                      )) : null}
                     </Select>
                     {!formData.officialAddress.townId && (
                       <>
