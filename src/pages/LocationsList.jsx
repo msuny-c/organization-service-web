@@ -17,12 +17,27 @@ export default function LocationsList() {
   });
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Удалить эту локацию?')) return;
+    const confirmMessage = 'Удалить эту локацию?';
+    const confirm = window.confirm(confirmMessage);
+    if (!confirm) return;
     try {
       await locationsApi.delete(id);
       queryClient.invalidateQueries({ queryKey: ['locations-list'] });
     } catch (e) {
-      alert(e?.response?.data?.error || e?.message || 'Ошибка удаления');
+      const msg = e?.response?.data?.error || e?.message || 'Ошибка удаления';
+      if (msg.includes('cascadeDelete=true')) {
+        const cascade = window.confirm('Локация используется адресами.\n\nУдалить её вместе со всеми связанными адресами и организациями?');
+        if (cascade) {
+          try {
+            await locationsApi.delete(id, { cascadeDelete: true });
+            queryClient.invalidateQueries({ queryKey: ['locations-list'] });
+          } catch (e2) {
+            alert(e2?.response?.data?.error || e2?.message || 'Ошибка каскадного удаления');
+          }
+        }
+      } else {
+        alert(msg);
+      }
     }
   };
 

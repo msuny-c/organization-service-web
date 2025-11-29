@@ -17,12 +17,27 @@ export default function AddressesList() {
   });
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Удалить этот адрес?')) return;
+    const confirmMessage = 'Удалить этот адрес?';
+    const confirm = window.confirm(confirmMessage);
+    if (!confirm) return;
     try {
       await addressesApi.delete(id);
       queryClient.invalidateQueries({ queryKey: ['addresses-list'] });
     } catch (e) {
-      alert(e?.response?.data?.error || e?.message || 'Ошибка удаления');
+      const msg = e?.response?.data?.error || e?.message || 'Ошибка удаления';
+      if (msg.includes('cascadeDelete=true')) {
+        const cascade = window.confirm('Адрес используется организациями.\n\nУдалить его вместе со всеми связанными организациями?');
+        if (cascade) {
+          try {
+            await addressesApi.delete(id, { cascadeDelete: true });
+            queryClient.invalidateQueries({ queryKey: ['addresses-list'] });
+          } catch (e2) {
+            alert(e2?.response?.data?.error || e2?.message || 'Ошибка каскадного удаления');
+          }
+        }
+      } else {
+        alert(msg);
+      }
     }
   };
 

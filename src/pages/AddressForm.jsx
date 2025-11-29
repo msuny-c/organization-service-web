@@ -118,7 +118,7 @@ export default function AddressForm() {
             >
               <option value="">Выберите город...</option>
               {locations.map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
+                <option key={l.id} value={l.id}>ID: {l.id} - {l.name}</option>
               ))}
             </Select>
           </CardBody>

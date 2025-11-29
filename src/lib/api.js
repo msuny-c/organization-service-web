@@ -38,7 +38,7 @@ export const coordinatesApi = {
   getById: (id) => api.get(`/api/coordinates/${id}`),
   create: (data) => api.post('/api/coordinates', data),
   update: (id, data) => api.put(`/api/coordinates/${id}`, data),
-  delete: (id) => api.delete(`/api/coordinates/${id}`),
+  delete: (id, body) => api.delete(`/api/coordinates/${id}`, { data: body }),
 };
 
 export const addressesApi = {
@@ -46,7 +46,7 @@ export const addressesApi = {
   getById: (id) => api.get(`/api/addresses/${id}`),
   create: (data) => api.post('/api/addresses', data),
   update: (id, data) => api.put(`/api/addresses/${id}`, data),
-  delete: (id) => api.delete(`/api/addresses/${id}`),
+  delete: (id, body) => api.delete(`/api/addresses/${id}`, { data: body }),
 };
 
 export const locationsApi = {
@@ -54,5 +54,5 @@ export const locationsApi = {
   getById: (id) => api.get(`/api/locations/${id}`),
   create: (data) => api.post('/api/locations', data),
   update: (id, data) => api.put(`/api/locations/${id}`, data),
-  delete: (id) => api.delete(`/api/locations/${id}`),
+  delete: (id, body) => api.delete(`/api/locations/${id}`, { data: body }),
 };
