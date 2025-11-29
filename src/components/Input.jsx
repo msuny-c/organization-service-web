@@ -8,7 +8,10 @@ export default function Input({
 }) {
   const handleKeyDown = (e) => {
     if (props.type === 'number') {
-      const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End'];
+      const isDecimalField = props.name && props.name.includes('z');
+      const allowedKeys = isDecimalField 
+        ? ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End']
+        : ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', 'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Enter', 'Home', 'End'];
       if (!allowedKeys.includes(e.key)) {
         e.preventDefault();
       }
@@ -17,19 +20,23 @@ export default function Input({
 
   const handleChange = (e) => {
     if (props.type === 'number') {
-      let value = e.target.value.replace(/[^0-9.,-]/g, '');
+      const isDecimalField = props.name && props.name.includes('z');
+      const pattern = isDecimalField ? /[^0-9.,-]/g : /[^0-9-]/g;
+      let value = e.target.value.replace(pattern, '');
       
       const parts = value.split('-');
       if (parts.length > 2) {
         value = '-' + parts.slice(1).join('');
       }
       
-      const decimalParts = value.split(/[.,]/);
-      if (decimalParts.length > 2) {
-        value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+      if (isDecimalField) {
+        const decimalParts = value.split(/[.,]/);
+        if (decimalParts.length > 2) {
+          value = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+        }
+        
+        value = value.replace(',', '.');
       }
-      
-      value = value.replace(',', '.');
       
       if (e.target.value !== value) {
         e.target.value = value;
