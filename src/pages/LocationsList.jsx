@@ -228,21 +228,22 @@ export default function LocationsList() {
               </tbody>
             </table>
           </div>
-          {totalPages > 1 && (
-            <div className="flex flex-wrap justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => (
-                <Button
-                  key={i}
-                  variant={page === i ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setPage(i)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-            </div>
-          )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex flex-wrap justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={page === i ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setPage(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
+        )}
       )}
     </div>
   );
