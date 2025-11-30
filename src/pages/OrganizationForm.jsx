@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { organizationsApi, referencesApi } from '../lib/api';
 import { ORGANIZATION_TYPES } from '../lib/constants';
+import { useWebSocket } from '../hooks/useWebSocket';
 import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
 import Input, { Select } from '../components/Input';
@@ -67,8 +68,14 @@ export default function OrganizationForm() {
     queryFn: () => organizationsApi.getById(id),
     enabled: isEdit,
     retry: false,
-    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
-    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  useWebSocket('/topic/organizations', () => {
+    if (isEdit && id) {
+      queryClient.invalidateQueries({ queryKey: ['organization', id] });
+      queryClient.refetchQueries({ queryKey: ['organization', id] });
+    }
   });
 
   useEffect(() => {
