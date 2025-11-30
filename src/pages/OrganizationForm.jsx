@@ -254,9 +254,12 @@ export default function OrganizationForm() {
       }
 
       case 'officialAddress.town.name': {
-        const requiresManualTown = (!formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId) ||
-                                   (formDataContext.officialAddressId === 'create' && 
-                                    (!formDataContext.officialAddress.townId || formDataContext.officialAddress.townId === ''));
+        const isCreatingNewAddress = formDataContext.officialAddressId === 'create';
+        const isReusingPostal = formDataContext.reusePostalAddressAsOfficial;
+        const hasSelectedTown = formDataContext.officialAddress.townId && formDataContext.officialAddress.townId !== '';
+        
+        const requiresManualTown = isCreatingNewAddress && !isReusingPostal && !hasSelectedTown;
+        
         if (!requiresManualTown) {
           return null;
         }
@@ -580,6 +583,22 @@ export default function OrganizationForm() {
       }
     } else {
       newFormData = { ...newFormData, [name]: val };
+    }
+    
+    if (name === 'officialAddressId') {
+      if (val === 'create') {
+        newFormData.officialAddress = {
+          zipCode: '',
+          townId: '',
+          town: { name: '', x: '', y: '', z: '' }
+        };
+      } else if (val === '' || val === null) {
+        newFormData.officialAddress = {
+          zipCode: '',
+          townId: '',
+          town: { name: '', x: '', y: '', z: '' }
+        };
+      }
     }
     
     setFormData(newFormData);
