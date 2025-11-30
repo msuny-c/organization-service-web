@@ -230,16 +230,37 @@ export default function OrganizationForm() {
       
       case 'postalAddress.town.x':
       case 'postalAddress.town.y':
-      case 'officialAddress.town.x':
-      case 'officialAddress.town.y':
         if (value === '' || value === null || value === undefined) return null;
         if (isNaN(value)) return 'Должно быть числом';
         return Number.isInteger(Number(value)) ? null : 'Должно быть целым числом';
       
+      case 'officialAddress.town.x':
+      case 'officialAddress.town.y': {
+        const shouldValidate = !formDataContext.reusePostalAddressAsOfficial && 
+                               (!formDataContext.officialAddressId || formDataContext.officialAddressId === 'create') &&
+                               (!formDataContext.officialAddress.townId || formDataContext.officialAddress.townId === '');
+        if (!shouldValidate) {
+          return null;
+        }
+        if (value === '' || value === null || value === undefined) return 'Поле обязательно';
+        if (isNaN(value)) return 'Должно быть числом';
+        return Number.isInteger(Number(value)) ? null : 'Должно быть целым числом';
+      }
+      
       case 'postalAddress.town.z':
-      case 'officialAddress.town.z':
         if (value === '' || value === null || value === undefined) return null;
         return isNaN(value) ? 'Должно быть числом' : null;
+      
+      case 'officialAddress.town.z': {
+        const shouldValidate = !formDataContext.reusePostalAddressAsOfficial && 
+                               (!formDataContext.officialAddressId || formDataContext.officialAddressId === 'create') &&
+                               (!formDataContext.officialAddress.townId || formDataContext.officialAddress.townId === '');
+        if (!shouldValidate) {
+          return null;
+        }
+        if (value === '' || value === null || value === undefined) return 'Поле обязательно';
+        return isNaN(value) ? 'Должно быть числом' : null;
+      }
       
       case 'postalAddress.town.name': {
         const requiresManualTown = (!formDataContext.postalAddressId || formDataContext.postalAddressId === '') && 
@@ -254,12 +275,9 @@ export default function OrganizationForm() {
       }
 
       case 'officialAddress.town.name': {
-        const isCreatingNewAddress = formDataContext.officialAddressId === 'create';
-        const isReusingPostal = formDataContext.reusePostalAddressAsOfficial;
-        const hasSelectedTown = formDataContext.officialAddress.townId && formDataContext.officialAddress.townId !== '';
-        
-        const requiresManualTown = isCreatingNewAddress && !isReusingPostal && !hasSelectedTown;
-        
+        const requiresManualTown = (!formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId) ||
+                                   (formDataContext.officialAddressId === 'create' && 
+                                    (!formDataContext.officialAddress.townId || formDataContext.officialAddress.townId === ''));
         if (!requiresManualTown) {
           return null;
         }
@@ -274,10 +292,13 @@ export default function OrganizationForm() {
         return value && value.length > 0 && value.length < 7 
           ? 'Минимум 7 символов' : null;
       
-      case 'officialAddress.zipCode':
-        return !formDataContext.reusePostalAddressAsOfficial && !formDataContext.officialAddressId && 
-               value && value.length > 0 && value.length < 7 
+      case 'officialAddress.zipCode': {
+        const shouldValidate = !formDataContext.reusePostalAddressAsOfficial && 
+                               (!formDataContext.officialAddressId || formDataContext.officialAddressId === 'create');
+        if (!shouldValidate) return null;
+        return value && value.length > 0 && value.length < 7 
           ? 'Минимум 7 символов' : null;
+      }
       
       default:
         return null;
@@ -435,10 +456,13 @@ export default function OrganizationForm() {
         normalizeNumber(officialAddressData.town?.y) !== null ||
         normalizeNumber(officialAddressData.town?.z) !== null;
 
-      payload.officialAddress = hasOfficialData
-        ? buildAddressPayload(officialAddressData, 'officialAddress')
-        : null;
-      payload.officialAddressId = null;
+      if (hasOfficialData) {
+        payload.officialAddress = buildAddressPayload(officialAddressData, 'officialAddress');
+        payload.officialAddressId = null;
+      } else {
+        payload.officialAddress = null;
+        payload.officialAddressId = null;
+      }
     } else if (payload.officialAddressId) {
       payload.officialAddress = null;
     } else {
@@ -583,22 +607,6 @@ export default function OrganizationForm() {
       }
     } else {
       newFormData = { ...newFormData, [name]: val };
-    }
-    
-    if (name === 'officialAddressId') {
-      if (val === 'create') {
-        newFormData.officialAddress = {
-          zipCode: '',
-          townId: '',
-          town: { name: '', x: '', y: '', z: '' }
-        };
-      } else if (val === '' || val === null) {
-        newFormData.officialAddress = {
-          zipCode: '',
-          townId: '',
-          town: { name: '', x: '', y: '', z: '' }
-        };
-      }
     }
     
     setFormData(newFormData);
@@ -1016,6 +1024,7 @@ export default function OrganizationForm() {
                           value={formData.officialAddress.town.name}
                           onChange={handleChange}
                           error={errors['officialAddress.town.name']}
+                          required
                         />
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <Input
@@ -1026,6 +1035,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.x}
                             onChange={handleChange}
                             error={errors['officialAddress.town.x']}
+                            required
                           />
                           <Input
                             label="Y"
@@ -1035,6 +1045,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.y}
                             onChange={handleChange}
                             error={errors['officialAddress.town.y']}
+                            required
                           />
                           <Input
                             label="Z"
@@ -1044,6 +1055,7 @@ export default function OrganizationForm() {
                             value={formData.officialAddress.town.z}
                             onChange={handleChange}
                             error={errors['officialAddress.town.z']}
+                            required
                           />
                         </div>
                       </>
