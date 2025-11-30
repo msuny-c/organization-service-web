@@ -73,8 +73,10 @@ export default function OrganizationForm() {
 
   useWebSocket('/topic/organizations', () => {
     if (isEdit && id) {
-      queryClient.invalidateQueries({ queryKey: ['organization', id] });
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
       queryClient.refetchQueries({ queryKey: ['organization', id] });
+      queryClient.refetchQueries();
     }
   });
 
