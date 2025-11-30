@@ -78,11 +78,13 @@ export default function OrganizationsList() {
     retry: false,
     keepPreviousData: true,
     placeholderData: (prevData) => prevData,
+    staleTime: 0,
+    cacheTime: 1000 * 60 * 5,
   });
 
-  // WebSocket для реального обновления данных
   useWebSocket('/topic/organizations', () => {
     queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    queryClient.refetchQueries({ queryKey: ['organizations'] });
   });
 
   useEffect(() => {

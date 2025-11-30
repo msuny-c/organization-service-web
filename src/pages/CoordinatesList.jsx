@@ -54,9 +54,9 @@ export default function CoordinatesList() {
     placeholderData: (prevData) => prevData,
   });
 
-  // WebSocket для реального обновления данных
   useWebSocket('/topic/coordinates', () => {
     queryClient.invalidateQueries({ queryKey: ['coordinates'] });
+    queryClient.refetchQueries({ queryKey: ['coordinates'] });
   });
 
   const handleDelete = async (id) => {

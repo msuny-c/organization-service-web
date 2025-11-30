@@ -72,9 +72,9 @@ export default function AddressesList() {
     placeholderData: (prevData) => prevData,
   });
 
-  // WebSocket для реального обновления данных
   useWebSocket('/topic/addresses', () => {
     queryClient.invalidateQueries({ queryKey: ['addresses'] });
+    queryClient.refetchQueries({ queryKey: ['addresses'] });
   });
 
   const handleDelete = async (id) => {

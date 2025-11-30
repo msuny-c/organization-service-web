@@ -70,9 +70,9 @@ export default function LocationsList() {
     placeholderData: (prevData) => prevData,
   });
 
-  // WebSocket для реального обновления данных
   useWebSocket('/topic/locations', () => {
     queryClient.invalidateQueries({ queryKey: ['locations'] });
+    queryClient.refetchQueries({ queryKey: ['locations'] });
   });
 
   const handleDelete = async (id) => {
