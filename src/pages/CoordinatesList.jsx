@@ -156,28 +156,17 @@ export default function CoordinatesList() {
             </table>
           </div>
           {totalPages > 1 && (
-            <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => (
                 <Button
-                  variant="outline"
+                  key={i}
+                  variant={page === i ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 0}
+                  onClick={() => setPage(i)}
                 >
-                  Назад
+                  {i + 1}
                 </Button>
-                <span className="text-sm text-gray-700">
-                  Страница {page + 1} из {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= totalPages - 1}
-                >
-                  Вперед
-                </Button>
-              </div>
+              ))}
             </div>
           )}
         </div>
