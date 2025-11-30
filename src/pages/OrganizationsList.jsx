@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, Plus, ArrowUpDown } from 'lucide-react';
 import { organizationsApi } from '../lib/api';
 import { getTypeName } from '../lib/constants';
+import { useWebSocket } from '../hooks/useWebSocket';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
 import Alert from '../components/Alert';
@@ -75,10 +76,13 @@ export default function OrganizationsList() {
       return organizationsApi.getAll(params);
     },
     retry: false,
-    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
-    refetchIntervalInBackground: true,
     keepPreviousData: true,
     placeholderData: (prevData) => prevData,
+  });
+
+  // WebSocket для реального обновления данных
+  useWebSocket('/topic/organizations', () => {
+    queryClient.invalidateQueries({ queryKey: ['organizations'] });
   });
 
   useEffect(() => {

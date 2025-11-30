@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, ArrowUpDown } from 'lucide-react';
 import { locationsApi } from '../lib/api';
+import { useWebSocket } from '../hooks/useWebSocket';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
 import Alert from '../components/Alert';
@@ -65,10 +66,13 @@ export default function LocationsList() {
       return locationsApi.getAll(params);
     },
     retry: false,
-    refetchInterval: (query) => (query.state.status === 'success' ? 1000 : false),
-    refetchIntervalInBackground: true,
     keepPreviousData: true,
     placeholderData: (prevData) => prevData,
+  });
+
+  // WebSocket для реального обновления данных
+  useWebSocket('/topic/locations', () => {
+    queryClient.invalidateQueries({ queryKey: ['locations'] });
   });
 
   const handleDelete = async (id) => {
