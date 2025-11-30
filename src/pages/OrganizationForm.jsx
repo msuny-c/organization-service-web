@@ -413,7 +413,7 @@ export default function OrganizationForm() {
       coordinates: null,
       postalAddressId: data.postalAddressId ? Number(data.postalAddressId) : null,
       postalAddress: null,
-      officialAddressId: data.reusePostalAddressAsOfficial ? null : (data.officialAddressId && data.officialAddressId !== '' ? Number(data.officialAddressId) : null),
+      officialAddressId: data.reusePostalAddressAsOfficial ? null : (data.officialAddressId && data.officialAddressId !== '' ? data.officialAddressId : null),
       officialAddress: null,
       reusePostalAddressAsOfficial: data.reusePostalAddressAsOfficial,
     };
