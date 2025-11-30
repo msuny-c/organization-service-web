@@ -80,60 +80,62 @@ jobs:
         run: |
           scp -P "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_key \
             dist.tar.gz \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/dist.tar.gz"
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/apps/organization-management/frontend-dist.tar.gz"
 
-      - name: Deploy to public_html
+      - name: Deploy to backend static folder
         run: |
           ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_key \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" << 'ENDSSH'
           set -x
-          echo "=== Starting deployment ==="
+          echo "=== Starting frontend deployment ==="
           
-          # Create public_html if it doesn't exist
-          echo "Creating public_html directory..."
-          mkdir -p ~/public_html
+          cd ~/apps/organization-management
           
-          # Backup current deployment (if exists)
-          if [ -d ~/public_html ] && [ -n "$(ls -A ~/public_html 2>/dev/null)" ]; then
-            echo "Backing up current deployment..."
-            mkdir -p ~/public_html_backups
-            BACKUP_FILE=~/public_html_backups/backup_$(date +%Y%m%d_%H%M%S).tar.gz
-            tar -czf "$BACKUP_FILE" -C ~/public_html .
+          # Create static directory if it doesn't exist
+          echo "Creating static directory..."
+          mkdir -p static
+          
+          # Backup current static files (if exists)
+          if [ -d static ] && [ -n "$(ls -A static 2>/dev/null)" ]; then
+            echo "Backing up current static files..."
+            mkdir -p static_backups
+            BACKUP_FILE=static_backups/backup_$(date +%Y%m%d_%H%M%S).tar.gz
+            tar -czf "$BACKUP_FILE" -C static .
             echo "Backup created: $BACKUP_FILE"
             
             # Keep only last 5 backups
-            cd ~/public_html_backups
+            cd static_backups
             ls -t backup_*.tar.gz 2>/dev/null | tail -n +6 | while read f; do rm -f "$f"; done
-            cd ~
+            cd ..
           else
-            echo "No existing deployment to backup"
+            echo "No existing static files to backup"
           fi
           
-          # Clear public_html
-          echo "Clearing public_html..."
-          rm -rf ~/public_html/*
+          # Clear static directory
+          echo "Clearing static directory..."
+          rm -rf static/*
           
           # Extract new build
-          echo "Extracting new build..."
-          if [ -f ~/dist.tar.gz ]; then
-            tar -xzf ~/dist.tar.gz -C ~/public_html
+          echo "Extracting new frontend build..."
+          if [ -f frontend-dist.tar.gz ]; then
+            tar -xzf frontend-dist.tar.gz -C static
             echo "Extraction completed"
           else
-            echo "ERROR: dist.tar.gz not found!"
+            echo "ERROR: frontend-dist.tar.gz not found!"
             exit 1
           fi
           
           # Cleanup
-          rm -f ~/dist.tar.gz
+          rm -f frontend-dist.tar.gz
           
-          echo "=== Deployment completed successfully! ==="
-          echo "Files in public_html:"
-          ls -lah ~/public_html
+          echo "=== Frontend deployment completed successfully! ==="
+          echo "Files in static directory:"
+          ls -lah static/
           ENDSSH
 
       - name: Verify deployment
         run: |
           ssh -n -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_key \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            'test -f ~/public_html/index.html && echo "✓ Deployment verified: index.html exists" || (echo "✗ Deployment failed: index.html not found" && exit 1)'
+            'test -f ~/apps/organization-management/static/index.html && echo "✓ Frontend deployment verified: index.html exists" || (echo "✗ Frontend deployment failed: index.html not found" && exit 1)'
 

@@ -7,7 +7,10 @@ export const useWebSocket = (topic, onMessage) => {
   const clientRef = useRef(null);
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:35000/ws');
+    // В production используем относительный URL, в development - полный
+    const wsUrl = import.meta.env.PROD ? '/ws' : 'http://localhost:35000/ws';
+    
+    const socket = new SockJS(wsUrl);
     const client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => {
