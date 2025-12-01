@@ -81,22 +81,9 @@ export default function LocationsList() {
     if (!confirm) return;
     try {
       await locationsApi.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['locations'] });
     } catch (e) {
       const msg = e?.response?.data?.error || e?.message || 'Ошибка удаления';
-      if (msg.includes('cascadeDelete=true')) {
-        const cascade = window.confirm('Локация используется адресами.\n\nУдалить её вместе со всеми связанными адресами и организациями?');
-        if (cascade) {
-          try {
-            await locationsApi.delete(id, { cascadeDelete: true });
-            queryClient.invalidateQueries({ queryKey: ['locations'] });
-          } catch (e2) {
-            alert(e2?.response?.data?.error || e2?.message || 'Ошибка каскадного удаления');
-          }
-        }
-      } else {
-        alert(msg);
-      }
+      alert(msg);
     }
   };
 

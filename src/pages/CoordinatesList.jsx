@@ -65,22 +65,9 @@ export default function CoordinatesList() {
     if (!confirm) return;
     try {
       await coordinatesApi.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['coordinates'] });
     } catch (e) {
       const msg = e?.response?.data?.error || e?.message || 'Ошибка удаления';
-      if (msg.includes('cascadeDelete=true')) {
-        const cascade = window.confirm('Координаты используются организациями.\n\nУдалить их вместе со всеми связанными организациями?');
-        if (cascade) {
-          try {
-            await coordinatesApi.delete(id, { cascadeDelete: true });
-            queryClient.invalidateQueries({ queryKey: ['coordinates'] });
-          } catch (e2) {
-            alert(e2?.response?.data?.error || e2?.message || 'Ошибка каскадного удаления');
-          }
-        }
-      } else {
-        alert(msg);
-      }
+      alert(msg);
     }
   };
 
