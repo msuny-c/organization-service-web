@@ -99,22 +99,8 @@ export default function OrganizationsList() {
   const handleDelete = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
       try {
-        // Оптимистично удаляем из кеша немедленно
-        queryClient.setQueryData(['organizations', { search, searchField, page, sort, dir }], (oldData) => {
-          if (!oldData?.data) return oldData;
-          return {
-            ...oldData,
-            data: {
-              ...oldData.data,
-              content: oldData.data.content.filter(org => org.id !== id)
-            }
-          };
-        });
-        
         await organizationsApi.delete(id);
       } catch (error) {
-        // Если ошибка - возвращаем данные обратно
-        queryClient.invalidateQueries({ queryKey: ['organizations'] });
         alert('Ошибка при удалении: ' + (error.response?.data?.message || error.message));
       }
     }
