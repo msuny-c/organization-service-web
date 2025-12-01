@@ -784,7 +784,7 @@ export default function OrganizationForm() {
             >
               <option value="">Создать новые...</option>
               {Array.isArray(coordinatesData?.data?.content) ? coordinatesData.data.content.map(coord => (
-                <option key={coord.id} value={coord.id}>
+                <option key={coord.id} value={String(coord.id)}>
                   X: {coord.x}, Y: {coord.y}
                 </option>
               )) : null}
@@ -863,7 +863,7 @@ export default function OrganizationForm() {
             >
               <option value="">Создать новый...</option>
               {Array.isArray(addressesData?.data?.content) ? addressesData.data.content.map(addr => (
-                <option key={addr.id} value={addr.id}>
+                <option key={addr.id} value={String(addr.id)}>
                   {addr.zipCode} - {addr.town?.name}
                 </option>
               )) : null}
@@ -886,7 +886,7 @@ export default function OrganizationForm() {
                 >
                   <option value="">Создать новый...</option>
                   {Array.isArray(locationsData?.data?.content) ? locationsData.data.content.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    <option key={loc.id} value={String(loc.id)}>{loc.name}</option>
                   )) : null}
                 </Select>
                 {!formData.postalAddress.townId && (
@@ -999,7 +999,7 @@ export default function OrganizationForm() {
                   <option value="">Не заполнено</option>
                   <option value="create">Создать новый...</option>
                   {Array.isArray(addressesData?.data?.content) && addressesData.data.content.map(addr => (
-                  <option key={addr.id} value={addr.id}>
+                  <option key={addr.id} value={String(addr.id)}>
                     {addr.zipCode} - {addr.town?.name}
                   </option>
                 ))}
@@ -1022,7 +1022,7 @@ export default function OrganizationForm() {
                     >
                       <option value="">Создать новый...</option>
                       {Array.isArray(locationsData?.data?.content) ? locationsData.data.content.map(loc => (
-                        <option key={loc.id} value={loc.id}>{loc.name}</option>
+                        <option key={loc.id} value={String(loc.id)}>{loc.name}</option>
                       )) : null}
                     </Select>
                     {!formData.officialAddress.townId && (
