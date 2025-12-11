@@ -9,6 +9,12 @@ export const api = axios.create({
   },
 });
 
+const toFormData = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return formData;
+};
+
 export const organizationsApi = {
   getAll: (params) => api.get('/api/organizations', { params }),
   getById: (id) => api.get(`/api/organizations/${id}`),
@@ -55,4 +61,25 @@ export const locationsApi = {
   create: (data) => api.post('/api/locations', data),
   update: (id, data) => api.put(`/api/locations/${id}`, data),
   delete: (id, body) => api.delete(`/api/locations/${id}`, { data: body }),
+};
+
+export const importsApi = {
+  upload: (file, { username, admin } = {}) => {
+    const formData = toFormData(file);
+    const params = {};
+    if (username) params.username = username;
+    if (admin) params.admin = true;
+    return api.post('/api/imports', formData, {
+      params,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  list: ({ username, admin } = {}) => {
+    const params = {};
+    if (username) params.username = username;
+    if (admin) params.admin = true;
+    return api.get('/api/imports', { params });
+  },
+  getTemplate: () =>
+    api.get('/api/imports/template', { responseType: 'blob' }),
 };

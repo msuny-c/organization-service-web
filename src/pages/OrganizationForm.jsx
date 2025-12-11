@@ -83,7 +83,17 @@ export default function OrganizationForm() {
   useEffect(() => {
     setHadOrgData(false);
     setHasInitializedForm(false);
-  }, [id]);
+    setErrors({});
+    setSubmitError(null);
+    
+    if (isEdit && id) {
+      queryClient.invalidateQueries({ queryKey: ['organization', id] });
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      queryClient.invalidateQueries({ queryKey: ['coordinates'] });
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+    }
+  }, [id, isEdit, queryClient]);
 
   useEffect(() => {
     if (isEdit && orgData?.data && String(orgData.data.id) === String(id)) {
@@ -103,15 +113,15 @@ export default function OrganizationForm() {
         rating: org.rating ?? '',
         annualTurnover: org.annualTurnover ?? '',
         type: org.type || '',
-        coordinatesId: org.coordinates?.id || '',
+        coordinatesId: org.coordinates?.id ? String(org.coordinates.id) : '',
         coordinates: org.coordinates ? {
           x: org.coordinates.x ?? '',
           y: org.coordinates.y ?? ''
         } : { x: '', y: '' },
-        postalAddressId: org.postalAddress?.id || '',
+        postalAddressId: org.postalAddress?.id ? String(org.postalAddress.id) : '',
         postalAddress: org.postalAddress ? {
           zipCode: org.postalAddress.zipCode || '',
-          townId: org.postalAddress.town?.id || '',
+          townId: org.postalAddress.town?.id ? String(org.postalAddress.town.id) : '',
           town: org.postalAddress.town ? {
             name: org.postalAddress.town.name || '',
             x: org.postalAddress.town.x ?? '',
@@ -122,7 +132,7 @@ export default function OrganizationForm() {
         officialAddressId: org.officialAddress?.id ? String(org.officialAddress.id) : '',
         officialAddress: org.officialAddress ? {
           zipCode: org.officialAddress.zipCode || '',
-          townId: org.officialAddress.town?.id || '',
+          townId: org.officialAddress.town?.id ? String(org.officialAddress.town.id) : '',
           town: org.officialAddress.town ? {
             name: org.officialAddress.town.name || '',
             x: org.officialAddress.town.x ?? '',

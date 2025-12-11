@@ -11,6 +11,7 @@ import LocationsList from './pages/LocationsList';
 import CoordinateForm from './pages/CoordinateForm';
 import AddressForm from './pages/AddressForm';
 import LocationForm from './pages/LocationForm';
+import ImportPage from './pages/ImportPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,7 @@ function App() {
             <Route path="locations" element={<LocationsList />} />
             <Route path="locations/create" element={<LocationForm />} />
             <Route path="locations/:id/edit" element={<LocationForm />} />
+            <Route path="imports" element={<ImportPage />} />
           </Route>
         </Routes>
       </HashRouter>

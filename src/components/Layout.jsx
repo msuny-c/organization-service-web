@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { Building2, Menu, Settings, X } from 'lucide-react';
+import { Building2, Menu, Settings, X, UploadCloud } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Список' },
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/addresses', label: 'Адреса' },
   { to: '/locations', label: 'Локации' },
   { to: '/operations', label: 'Операции', icon: Settings },
+  { to: '/imports', label: 'Импорт', icon: UploadCloud },
 ];
 
 export default function Layout() {
