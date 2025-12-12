@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Pencil, Trash2, Building2, BarChart3, MapPin, Mail, FileText } from 'lucide-react';
 import { organizationsApi } from '../lib/api';
 import { getTypeName } from '../lib/constants';

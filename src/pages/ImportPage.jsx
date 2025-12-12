@@ -160,34 +160,27 @@ export default function ImportPage() {
             </div>
           </CardHeader>
           <CardBody className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">Файл</label>
-              <div className="flex items-center gap-3">
-                <label className="flex-1 cursor-pointer">
-                  <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
-                    {file ? file.name : 'Выберите .json файл'}
-                  </div>
-                  <input
-                    type="file"
-                    accept=".json,application/json"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </label>
-                <Button
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="whitespace-nowrap"
-                >
-                  <UploadCloud className="h-4 w-4 mr-2" />
-                  Импортировать
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-xs text-gray-500">
-              Файл должен содержать массив объектов OrganizationDto. Вложенные поля
-              (coordinates, postalAddress, officialAddress, town) указываются в той же записи.
+              <label className="flex-1 cursor-pointer">
+                <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
+                  {file ? file.name : 'Выберите .json файл'}
+                </div>
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+              <Button
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="w-full"
+              >
+                <UploadCloud className="h-4 w-4 mr-2" />
+                Импортировать
+              </Button>
             </div>
           </CardBody>
         </Card>
