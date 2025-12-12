@@ -123,16 +123,22 @@ export default function ImportPage() {
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
 
   const highlightedJson = useMemo(() => {
-    const escape = (str) => str
+    const json = jsonText || '';
+    const escaped = json
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    const raw = escape(jsonText || '');
-    return raw
-      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?=\s*:))/g, '<span class="text-sky-300">$1</span>') // keys
-      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")/g, '<span class="text-emerald-300">$1</span>') // strings
-      .replace(/\b(true|false|null)\b/g, '<span class="text-amber-300">$1</span>') // booleans/null
-      .replace(/\b-?\d+(\.\d+)?([eE][+-]?\d+)?\b/g, '<span class="text-purple-300">$&</span>'); // numbers
+
+    return escaped.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?=\s*:))|("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g,
+      (match, key, _k2, str, _s2, bool) => {
+        let cls = 'text-emerald-300';
+        if (key) cls = 'text-sky-300';
+        else if (bool) cls = 'text-amber-300';
+        else if (/^-?\d/.test(match)) cls = 'text-purple-300';
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
   }, [jsonText]);
 
   const renderStatus = (status) => {
