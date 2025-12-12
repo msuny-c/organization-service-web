@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:35000';
+const TOKEN_KEY = 'org_app_token';
+const USER_KEY = 'org_app_user';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -8,6 +10,39 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const authStorage = {
+  set(token, user) {
+    localStorage.setItem(TOKEN_KEY, token);
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+  },
+  clear() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  },
+  getToken() {
+    return localStorage.getItem(TOKEN_KEY);
+  },
+  getUser() {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  },
+};
 
 const toFormData = (file) => {
   const formData = new FormData();
@@ -64,22 +99,18 @@ export const locationsApi = {
 };
 
 export const importsApi = {
-  upload: (file, { username, admin } = {}) => {
+  upload: (file) => {
     const formData = toFormData(file);
-    const params = {};
-    if (username) params.username = username;
-    if (admin) params.admin = true;
     return api.post('/api/imports', formData, {
-      params,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  list: ({ username, admin } = {}) => {
-    const params = {};
-    if (username) params.username = username;
-    if (admin) params.admin = true;
-    return api.get('/api/imports', { params });
-  },
+  list: () => api.get('/api/imports'),
   getTemplate: () =>
     api.get('/api/imports/template', { responseType: 'blob' }),
+};
+
+export const authApi = {
+  login: (data) => api.post('/api/auth/login', data),
+  register: (data) => api.post('/api/auth/register', data),
 };

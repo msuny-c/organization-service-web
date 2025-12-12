@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
-import { Building2, Menu, Settings, X, UploadCloud } from 'lucide-react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Building2, Menu, Settings, X, UploadCloud, LogOut, UserCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Список' },
@@ -13,9 +14,15 @@ const NAV_ITEMS = [
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setMobileMenuOpen(false);
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,7 +39,7 @@ export default function Layout() {
             </Link>
 
             <div className="flex items-center gap-4">
-              <div className="hidden sm:flex sm:space-x-8">
+              <div className="hidden sm:flex sm:space-x-6">
                 {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
                   <Link
                     key={to}
@@ -43,6 +50,42 @@ export default function Layout() {
                     {label}
                   </Link>
                 ))}
+              </div>
+              <div className="hidden sm:flex items-center gap-3">
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <UserCircle className="h-5 w-5 text-gray-500" />
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-semibold">{user?.username}</span>
+                        <span className="text-xs text-gray-500">{user?.role}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Выйти
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      Войти
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center gap-1 rounded-md border border-blue-500 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50"
+                    >
+                      Регистрация
+                    </Link>
+                  </>
+                )}
               </div>
 
               <button
@@ -71,6 +114,33 @@ export default function Layout() {
                   {label}
                 </Link>
               ))}
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => { closeMobileMenu(); handleLogout(); }}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full text-left"
+                >
+                  <LogOut className="h-4 w-4 text-gray-500" />
+                  Выйти
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to="/login"
+                    onClick={closeMobileMenu}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full text-left"
+                  >
+                    Войти
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={closeMobileMenu}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full text-left"
+                  >
+                    Регистрация
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

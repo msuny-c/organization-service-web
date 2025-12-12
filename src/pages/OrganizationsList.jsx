@@ -8,8 +8,10 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
 import Alert from '../components/Alert';
+import { useAuth } from '../context/AuthContext';
 
 export default function OrganizationsList() {
+  const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState('');
   const [searchField, setSearchField] = useState('name');
   const [page, setPage] = useState(0);
@@ -152,10 +154,13 @@ export default function OrganizationsList() {
             Управление всеми организациями системы
           </p>
         </div>
-        <Link to="/create" className="block w-full md:inline-block md:w-auto">
-          <Button className="w-full md:w-auto">
+        <Link
+          to={isAuthenticated ? '/create' : '/login'}
+          className="block w-full md:inline-block md:w-auto"
+        >
+          <Button className="w-full md:w-auto" variant={isAuthenticated ? 'primary' : 'secondary'}>
             <Plus className="h-4 w-4 mr-2" />
-            Создать
+            {isAuthenticated ? 'Создать' : 'Войти для создания'}
           </Button>
         </Link>
       </div>

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { UploadCloud, FileText, RefreshCcw, ShieldCheck, UserCircle, Clock } from 'lucide-react';
+import { UploadCloud, FileText, UserCircle, Clock } from 'lucide-react';
 import Button from '../components/Button';
 import Card, { CardBody, CardHeader } from '../components/Card';
 import Input from '../components/Input';
 import Alert from '../components/Alert';
 import { importsApi } from '../lib/api';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { useAuth } from '../context/AuthContext';
 
 const STATUS_MAP = {
   IN_PROGRESS: { label: 'В процессе', className: 'bg-blue-100 text-blue-800 border-blue-200' },
@@ -21,23 +23,28 @@ const formatDate = (value) => {
 
 export default function ImportPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [file, setFile] = useState(null);
-  const [username, setUsername] = useState('');
-  const [admin, setAdmin] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
 
-  const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['importHistory', { username, admin }],
-    queryFn: () => importsApi.list({ username: username.trim(), admin }),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['importHistory'],
+    queryFn: () => importsApi.list(),
     select: (response) => response.data || [],
     keepPreviousData: true,
     refetchInterval: (data) =>
       Array.isArray(data) && data.some((op) => op.status === 'IN_PROGRESS') ? 4000 : false,
   });
 
+  useWebSocket('/topic/imports', () => {
+    queryClient.invalidateQueries({ queryKey: ['importHistory'] });
+    queryClient.refetchQueries({ queryKey: ['importHistory'] });
+  });
+
   const uploadMutation = useMutation({
-    mutationFn: ({ file, username, admin }) => importsApi.upload(file, { username, admin }),
+    mutationFn: ({ file }) => importsApi.upload(file),
     onSuccess: (response) => {
       setUploadError(null);
       setUploadSuccess({
@@ -83,12 +90,16 @@ export default function ImportPage() {
   };
 
   const handleUpload = () => {
+    if (!isAuthenticated) {
+      setUploadError('Для импорта необходимо войти в систему');
+      return;
+    }
     if (!file) {
       setUploadError('Выберите файл для импорта');
       return;
     }
     setUploadError(null);
-    uploadMutation.mutate({ file, username: username.trim(), admin });
+    uploadMutation.mutate({ file });
   };
 
   const renderStatus = (status) => {
@@ -112,15 +123,6 @@ export default function ImportPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="whitespace-nowrap"
-          >
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            Обновить
-          </Button>
           <Button
             variant="secondary"
             onClick={() => templateMutation.mutate()}
@@ -185,24 +187,10 @@ export default function ImportPage() {
             </div>
 
             <Input
-              label="Имя пользователя (для истории)"
-              placeholder="Например, student1"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              label="Текущий пользователь"
+              value={user?.username || ''}
+              disabled
             />
-
-            <label className="flex items-center gap-3 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                checked={admin}
-                onChange={(e) => setAdmin(e.target.checked)}
-              />
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-gray-500" />
-                Администратор (видеть все операции)
-              </span>
-            </label>
 
             <div className="text-xs text-gray-500">
               Файл должен содержать массив объектов OrganizationDto. Вложенные поля
@@ -221,13 +209,13 @@ export default function ImportPage() {
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">История импортов</h2>
                   <p className="text-sm text-gray-500">
-                    {admin ? 'Все операции (режим администратора)' : 'Операции выбранного пользователя'}
+                    Операции текущего пользователя (администратор видит все операции)
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <UserCircle className="h-4 w-4" />
-                {username.trim() || 'anonymous'}
+                {user?.username || '—'}
               </div>
             </div>
           </CardHeader>
