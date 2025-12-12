@@ -99,15 +99,15 @@ export const locationsApi = {
 };
 
 export const importsApi = {
-  upload: (file) => {
+  upload: (file, objectType = 'ORGANIZATION') => {
     const formData = toFormData(file);
-    return api.post('/api/imports', formData, {
+    return api.post(`/api/imports?objectType=${encodeURIComponent(objectType)}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
   list: () => api.get('/api/imports'),
-  getTemplate: () =>
-    api.get('/api/imports/template', { responseType: 'blob' }),
+  getTemplate: (objectType = 'ORGANIZATION') =>
+    api.get('/api/imports/template', { responseType: 'blob', params: { objectType } }),
 };
 
 export const authApi = {

@@ -15,6 +15,13 @@ const STATUS_MAP = {
   FAILED: { label: 'Ошибка', className: 'bg-red-100 text-red-800 border-red-200' },
 };
 
+const IMPORT_TYPES = {
+  ORGANIZATION: 'Организации',
+  COORDINATES: 'Координаты',
+  LOCATION: 'Локации',
+  ADDRESS: 'Адреса',
+};
+
 const formatDate = (value) => {
   if (!value) return '—';
   const date = new Date(value);
@@ -31,6 +38,7 @@ export default function ImportPage() {
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
+  const [objectType, setObjectType] = useState('ORGANIZATION');
 
   const shouldFetchHistory = isAuthenticated;
 
@@ -58,7 +66,7 @@ export default function ImportPage() {
   );
 
   const uploadMutation = useMutation({
-    mutationFn: ({ file }) => importsApi.upload(file),
+    mutationFn: ({ file, objectType }) => importsApi.upload(file, objectType),
     onSuccess: (response) => {
       setUploadError(null);
       setUploadSuccess({
@@ -80,7 +88,7 @@ export default function ImportPage() {
   });
 
   const templateMutation = useMutation({
-    mutationFn: () => importsApi.getTemplate(),
+    mutationFn: () => importsApi.getTemplate(objectType),
     onSuccess: (response) => {
       const blob = new Blob([response.data], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -118,7 +126,7 @@ export default function ImportPage() {
       return;
     }
     setUploadError(null);
-    uploadMutation.mutate({ file });
+    uploadMutation.mutate({ file, objectType });
   };
 
   const humanizeError = (err) => {
@@ -229,11 +237,23 @@ export default function ImportPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Новый импорт</h2>
-                <p className="text-sm text-gray-500">JSON-массив организаций</p>
+                <p className="text-sm text-gray-500">JSON-массив выбранного типа</p>
               </div>
             </div>
           </CardHeader>
           <CardBody className="space-y-6">
+            <div className="space-y-5">
+              <label className="block text-sm font-medium text-gray-700">Тип данных</label>
+              <select
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={objectType}
+                onChange={(e) => setObjectType(e.target.value)}
+              >
+                {Object.entries(IMPORT_TYPES).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-5">
               <label className="block text-sm font-medium text-gray-700">Файл</label>
               <label className="flex-1 cursor-pointer">
@@ -304,6 +324,7 @@ export default function ImportPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
                       {user?.role === 'ADMIN' && (
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
@@ -316,6 +337,9 @@ export default function ImportPage() {
                     {history.map((op) => (
                       <tr key={op.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">{op.id}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {IMPORT_TYPES[op.objectType] || op.objectType || '—'}
+                        </td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
                         {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>}
                         <td className="px-4 py-3 text-sm text-gray-700">{op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}</td>
