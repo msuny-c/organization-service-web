@@ -1,0 +1,36 @@
+[
+  {
+    "name": "New organization",
+    "coordinates": { "x": 1001, "y": 2020 },
+    "employeesCount": 50,
+    "annualTurnover": 500000,
+    "rating": 4,
+    "fullName": "Demo Org LLC12",
+    "type": "COMMERCIAL",
+    "postalAddress": {
+      "zipCode": "190000135",
+      "town": { "x": 1, "y": 2, "z": 3.5, "name": "Sample Town" }
+    },
+    "officialAddress": {
+      "zipCode": "19000023",
+      "town": { "x": 4, "y": 5, "z": 6.5, "name": "Another Town" }
+    }
+  },
+  {
+    "name": "New organization",
+    "coordinates": { "x": 10011, "y": 200 },
+    "employeesCount": 50,
+    "annualTurnover": 500000,
+    "rating": 4,
+    "fullName": "Demo Org LLC13",
+    "type": "COMMERCIAL",
+    "postalAddress": {
+      "zipCode": "19000013a",
+      "town": { "x": 1, "y": 2, "z": 3.5, "name": "Sample Town" }
+    },
+    "officialAddress": {
+      "zipCode": "1900002d",
+      "town": { "x": 4, "y": 5, "z": 6.5, "name": "Another Town" }
+    }
+  }
+]

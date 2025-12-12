@@ -2,9 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UploadCloud, FileText, Clock } from 'lucide-react';
-import Editor from 'react-simple-code-editor';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-json';
 import Button from '../components/Button';
 import Card, { CardBody, CardHeader } from '../components/Card';
 import Alert from '../components/Alert';
@@ -30,12 +27,10 @@ export default function ImportPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [file, setFile] = useState(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
-  const [importedOrgs, setImportedOrgs] = useState([]);
-  const [jsonText, setJsonText] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const shouldFetchHistory = isAuthenticated;
 
@@ -66,18 +61,20 @@ export default function ImportPage() {
     mutationFn: ({ file }) => importsApi.upload(file),
     onSuccess: (response) => {
       setUploadError(null);
-      setImportedOrgs(response.data.createdOrganizations || []);
       setUploadSuccess({
         id: response.data.id,
         status: response.data.status,
         added: response.data.addedCount,
       });
       setFile(null);
+      setFileInputKey((prev) => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['importHistory'] });
       queryClient.refetchQueries({ queryKey: ['importHistory'] });
     },
     onError: (err) => {
       setUploadSuccess(null);
+      setFile(null);
+      setFileInputKey((prev) => prev + 1);
       setUploadError(err?.response?.data?.error || err.message || 'Не удалось выполнить импорт');
     },
   });
@@ -107,6 +104,7 @@ export default function ImportPage() {
 
   const handleFileChange = (e) => {
     const next = e.target.files?.[0];
+    setUploadError(null);
     setFile(next || null);
   };
 
@@ -139,8 +137,6 @@ export default function ImportPage() {
   };
 
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
-
-  const highlight = (code) => Prism.highlight(code, Prism.languages.json, 'json');
 
   const renderStatus = (status) => {
     const meta = STATUS_MAP[status] || {
@@ -202,11 +198,6 @@ export default function ImportPage() {
             <FileText className="h-4 w-4 mr-2" />
             Шаблон
           </Button>
-          {isAuthenticated && (
-            <Button variant="outline" onClick={() => setIsModalOpen(true)} className="whitespace-nowrap">
-              Вставить JSON
-            </Button>
-          )}
         </div>
       </div>
 
@@ -229,7 +220,7 @@ export default function ImportPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <Card className="xl:col-span-1">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -249,32 +240,14 @@ export default function ImportPage() {
                 <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
                   {file ? file.name : 'Выберите .json файл'}
                 </div>
-                <input type="file" accept=".json,application/json" className="hidden" onChange={handleFileChange} />
+                <input
+                  key={fileInputKey}
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
               </label>
-              {importedOrgs.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Импортированные организации</div>
-                  <select
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                    onChange={(e) => {
-                      const orgId = e.target.value;
-                      if (orgId) {
-                        window.location.hash = `#/organizations/${orgId}`;
-                      }
-                    }}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>
-                      Выберите организацию
-                    </option>
-                    {importedOrgs.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name} (ID: {org.id})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
               {isAuthenticated ? (
                 <Button onClick={handleUpload} disabled={isUploading} className="w-full mt-4">
                   <UploadCloud className="h-4 w-4 mr-2" />
@@ -356,68 +329,6 @@ export default function ImportPage() {
           </CardBody>
         </Card>
       </div>
-
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              setIsModalOpen(false);
-            }
-          }}
-        >
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <h3 className="text-lg font-semibold text-gray-900">Вставка JSON</h3>
-              <button type="button" className="text-gray-500 hover:text-gray-700" onClick={() => setIsModalOpen(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <label className="block text-sm font-medium text-gray-700">JSON</label>
-
-              <div className="space-y-3">
-              <Editor
-                  className="json-editor"
-                  value={jsonText}
-                  onValueChange={setJsonText}
-                  highlight={highlight}
-                  textareaId="json-editor"
-                  textareaClassName="json-editor__textarea"
-                  preClassName="json-editor__pre"
-                  textareaProps={{ spellCheck: false }}
-                  placeholder=''
-              />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Отмена
-              </Button>
-              <Button
-                onClick={() => {
-                  try {
-                    const parsed = JSON.parse(jsonText);
-                    const blob = new Blob([JSON.stringify(parsed)], { type: 'application/json' });
-                    const virtualFile = new File([blob], 'pasted-import.json', { type: 'application/json' });
-                    setUploadError(null);
-                    uploadMutation.mutate({ file: virtualFile });
-                    setIsModalOpen(false);
-                    setJsonText('');
-                  } catch (err) {
-                    setUploadError('Некорректный JSON: ' + (err.message || ''));
-                  }
-                }}
-                disabled={isUploading}
-              >
-                Импортировать JSON
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
