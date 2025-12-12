@@ -122,6 +122,19 @@ export default function ImportPage() {
 
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
 
+  const highlightedJson = useMemo(() => {
+    const escape = (str) => str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const raw = escape(jsonText || '');
+    return raw
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?=\s*:))/g, '<span class="text-sky-300">$1</span>') // keys
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")/g, '<span class="text-emerald-300">$1</span>') // strings
+      .replace(/\b(true|false|null)\b/g, '<span class="text-amber-300">$1</span>') // booleans/null
+      .replace(/\b-?\d+(\.\d+)?([eE][+-]?\d+)?\b/g, '<span class="text-purple-300">$&</span>'); // numbers
+  }, [jsonText]);
+
   const renderStatus = (status) => {
     const meta = STATUS_MAP[status] || { label: status || '—', className: 'bg-gray-100 text-gray-700 border-gray-200' };
     return (
@@ -308,7 +321,7 @@ export default function ImportPage() {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
                       )}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Добавлено</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Начало</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата загрузки</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -348,9 +361,13 @@ export default function ImportPage() {
             </div>
             <div className="p-4 space-y-3">
               <label className="block text-sm font-medium text-gray-700">JSON</label>
-              <div className="border border-gray-200 rounded-lg bg-gray-900 text-green-100">
+              <div className="relative border border-gray-200 rounded-lg bg-gray-900 text-green-100">
+                <pre
+                  className="h-72 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: highlightedJson || '// Вставьте JSON ниже' }}
+                />
                 <textarea
-                  className="w-full h-72 bg-gray-900 text-green-100 font-mono text-sm p-4 focus:outline-none"
+                  className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white font-mono text-sm p-4 focus:outline-none"
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
                   value={jsonText}
                   onChange={(e) => setJsonText(e.target.value)}
