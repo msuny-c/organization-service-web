@@ -46,8 +46,16 @@ export default function AuthModal({ mode = 'login' }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="max-w-md w-full">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) closeModal();
+      }}
+    >
+      <div
+        className="max-w-md w-full"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">

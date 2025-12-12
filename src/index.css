@@ -11,9 +11,6 @@
    JSON Editor (react-simple-code-editor)
    ========================= */
 
-/* Важно: НЕ задаём overflow на pre отдельно, иначе будут два независимых скролла
-   и начнутся рассинхроны. Скролл будет только у textarea. */
-
 .json-editor {
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
@@ -22,27 +19,31 @@
 
   position: relative;
 
-  font-family: "Fira Code", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  font-size: 14px;
-
-  /* Явно фиксируем line-height в пикселях — меньше шансов на округления/расхождения */
-  line-height: 20px;
-
-  /* tab-size лучше числом, не 2ch */
-  tab-size: 2;
-
-  /* Высота редактора */
+  /* высота редактора (как у тебя было) */
   min-height: 192px;
   max-height: 320px;
 
-  /* Контейнер обрезает, скроллим textarea */
+  /* важно: не даём контейнеру расти бесконечно */
   overflow: hidden;
+
+  font-family: "Fira Code", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  font-size: 14px;
+
+  /* фиксируем в px, чтобы не ловить округления */
+  line-height: 20px;
+
+  /* tab-size лучше числом */
+  tab-size: 2;
+
+  /* чтобы у pre/textarea всегда была одинаковая ширина при появлении скролла */
+  scrollbar-gutter: stable;
 }
 
-/* Одинаковые “метрики” для обоих слоёв (textarea и pre) */
-.json-editor__textarea,
-.json-editor__pre {
+/* Оба слоя должны быть 1-в-1 по метрикам и переносам */
+.json-editor__pre,
+.json-editor__textarea {
   box-sizing: border-box;
 
   font-family: inherit;
@@ -50,39 +51,63 @@
   line-height: inherit;
   tab-size: inherit;
 
-  /* ВАЖНО: одинаковые переносы */
+  padding: 12px;
+
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
+
+  /* важно для одинаковой ширины при скролле */
+  scrollbar-gutter: stable;
 }
 
-/* Подсветка (pre) должна быть клика-недоступной */
+/* Подсветка: тоже делаем overflow:auto, чтобы ширина/перенос совпадали с textarea,
+   но скроллбар прячем, а прокрутку синхронизирует компонент. */
 .json-editor__pre {
   margin: 0;
   pointer-events: none;
+  overflow: auto;
 }
 
-/* Prism может пытаться переопределять code/pre — фиксируем наследование */
+/* прячем скроллбар у pre (чтобы был только один визуальный скролл) */
+.json-editor__pre {
+  -ms-overflow-style: none; /* IE/Edge legacy */
+  scrollbar-width: none; /* Firefox */
+}
+.json-editor__pre::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Prism иногда переопределяет code */
 .json-editor__pre code {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
 }
 
-/* Реальный ввод (textarea) */
+/* Ввод */
 .json-editor__textarea {
+  /* textarea у react-simple-code-editor обычно absolute, но мы гарантируем */
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  border: 0;
+  outline: none;
+  resize: none;
+
+  background: transparent;
+
+  overflow: auto;
+
   color: transparent;
   -webkit-text-fill-color: transparent;
   caret-color: #38bdf8;
-
-  outline: none;
-  background: transparent;
-
-  /* Один скролл — здесь */
-  overflow: auto;
 }
 
-/* Выделение текста */
 .json-editor__textarea::selection {
   background-color: rgba(56, 189, 248, 0.35);
 }

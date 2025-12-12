@@ -378,18 +378,17 @@ export default function ImportPage() {
               <label className="block text-sm font-medium text-gray-700">JSON</label>
 
               <div className="space-y-3">
-                <Editor
+              <Editor
                   className="json-editor"
                   value={jsonText}
                   onValueChange={setJsonText}
                   highlight={highlight}
-                  padding={12}
                   textareaId="json-editor"
-                  textareaClassName="json-editor__textarea focus:outline-none"
+                  textareaClassName="json-editor__textarea"
                   preClassName="json-editor__pre"
                   textareaProps={{ spellCheck: false }}
-                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
-                />
+                  placeholder=''
+              />
               </div>
             </div>
 
