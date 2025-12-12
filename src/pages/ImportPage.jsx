@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UploadCloud, FileText, Clock } from 'lucide-react';
 import Button from '../components/Button';
@@ -30,6 +30,15 @@ export default function ImportPage() {
   const [importedOrgs, setImportedOrgs] = useState([]);
   const [jsonText, setJsonText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const textareaRef = useRef(null);
+  const preRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop;
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  }, [jsonText]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['importHistory', user?.role],
@@ -367,13 +376,15 @@ export default function ImportPage() {
             </div>
             <div className="p-4 space-y-3">
               <label className="block text-sm font-medium text-gray-700">JSON</label>
-              <div className="relative border border-gray-200 rounded-lg bg-gray-900 text-green-100">
+              <div className="relative border border-gray-200 rounded-lg bg-gray-900 text-green-100 h-72">
                 <pre
-                  className="pointer-events-none h-72 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
-                  dangerouslySetInnerHTML={{ __html: highlightedJson || '// Вставьте JSON ниже' }}
+                  ref={preRef}
+                  className="pointer-events-none absolute inset-0 m-0 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: highlightedJson || '<span class="text-gray-500">// Вставьте JSON ниже</span>' }}
                 />
                 <textarea
-                  className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white font-mono text-sm p-4 focus:outline-none"
+                  ref={textareaRef}
+                  className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white font-mono text-sm p-4 focus:outline-none resize-none"
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
                   value={jsonText}
                   onChange={(e) => setJsonText(e.target.value)}
@@ -381,6 +392,12 @@ export default function ImportPage() {
                   autoCorrect="off"
                   autoComplete="off"
                   style={{ color: 'transparent' }}
+                  onScroll={(e) => {
+                    if (preRef.current) {
+                      preRef.current.scrollTop = e.target.scrollTop;
+                      preRef.current.scrollLeft = e.target.scrollLeft;
+                    }
+                  }}
                 />
               </div>
             </div>
