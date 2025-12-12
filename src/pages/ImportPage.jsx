@@ -377,8 +377,18 @@ export default function ImportPage() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsModalOpen(false);
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-3xl w-full"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <h3 className="text-lg font-semibold text-gray-900">Вставка JSON</h3>
               <button
@@ -399,8 +409,8 @@ export default function ImportPage() {
                   highlight={highlight}
                   padding={12}
                   textareaId="json-editor"
-                  textareaClassName="focus:outline-none"
-                  preClassName="font-mono text-sm leading-5"
+                  textareaClassName="json-editor__textarea focus:outline-none"
+                  preClassName="json-editor__pre"
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
                   style={{
                     minHeight: '192px',

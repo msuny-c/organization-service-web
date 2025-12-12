@@ -13,6 +13,11 @@
   background: #0b1120;
   color: #e2e8f0;
   overflow: auto;
+  position: relative;
+  font-family: "Fira Code", "Fira Mono", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  tab-size: 2ch;
 }
 
 .json-editor pre {
@@ -20,16 +25,23 @@
   min-height: 192px;
   max-height: 320px;
   overflow: auto;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  padding: 12px;
 }
 
 .json-editor code {
-  font-family: "Fira Code", "Fira Mono", monospace;
-  font-size: 0.9rem;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .json-editor .npm__react-simple-code-editor__textarea {
+  color: transparent;
   caret-color: #38bdf8;
   outline: none;
+  padding: 12px;
+  background: transparent;
 }
 
 .json-editor .npm__react-simple-code-editor__textarea::selection {
