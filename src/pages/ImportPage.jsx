@@ -28,7 +28,6 @@ export default function ImportPage() {
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
   const [importedOrgs, setImportedOrgs] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [jsonText, setJsonText] = useState('');
 
   const { data, isLoading, error } = useQuery({
@@ -177,13 +176,6 @@ export default function ImportPage() {
             <FileText className="h-4 w-4 mr-2" />
             Шаблон
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsModalOpen(true)}
-            className="whitespace-nowrap"
-          >
-            Вставить JSON
-          </Button>
         </div>
       </div>
 
@@ -220,7 +212,7 @@ export default function ImportPage() {
             </div>
           </CardHeader>
           <CardBody className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-5">
               <label className="block text-sm font-medium text-gray-700">Файл</label>
               <label className="flex-1 cursor-pointer">
                 <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
@@ -233,6 +225,42 @@ export default function ImportPage() {
                   onChange={handleFileChange}
                 />
               </label>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Вставить JSON</label>
+                <textarea
+                  className="w-full min-h-[140px] rounded-md border border-gray-300 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
+                  value={jsonText}
+                  onChange={(e) => setJsonText(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {
+                      try {
+                        const parsed = JSON.parse(jsonText);
+                        const blob = new Blob([JSON.stringify(parsed)], { type: 'application/json' });
+                        const virtualFile = new File([blob], 'pasted-import.json', { type: 'application/json' });
+                        setUploadError(null);
+                        uploadMutation.mutate({ file: virtualFile });
+                      } catch (err) {
+                        setUploadError('Некорректный JSON: ' + (err.message || ''));
+                      }
+                    }}
+                    disabled={isUploading}
+                  >
+                    Импортировать JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setJsonText('')}
+                  >
+                    Очистить
+                  </Button>
+                </div>
+              </div>
               {importedOrgs.length > 0 && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-gray-700">Импортированные организации</div>
@@ -258,7 +286,7 @@ export default function ImportPage() {
               <Button
                 onClick={handleUpload}
                 disabled={isUploading}
-                className="w-full"
+                className="w-full mt-2"
               >
                 <UploadCloud className="h-4 w-4 mr-2" />
                 Импортировать
@@ -283,7 +311,7 @@ export default function ImportPage() {
                 </div>
               </div>
           </CardHeader>
-          <CardBody>
+          <CardBody className="p-0">
             {isLoading && (
               <div className="py-10 text-center text-gray-500">Загрузка истории...</div>
             )}
@@ -307,11 +335,8 @@ export default function ImportPage() {
                       {user?.role === 'ADMIN' && (
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
                       )}
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Файл</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Добавлено</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Начало</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Завершено</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ошибка</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -322,15 +347,10 @@ export default function ImportPage() {
                         {user?.role === 'ADMIN' && (
                           <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>
                         )}
-                        <td className="px-4 py-3 text-sm text-gray-600">{op.filename || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">
                           {op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatDate(op.startedAt)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{formatDate(op.finishedAt)}</td>
-                        <td className="px-4 py-3 text-sm text-red-600 max-w-xs">
-                          {op.errorMessage || '—'}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -340,58 +360,6 @@ export default function ImportPage() {
           </CardBody>
         </Card>
       </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full">
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <h3 className="text-lg font-semibold text-gray-900">Вставка JSON</h3>
-              <button
-                type="button"
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setIsModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 space-y-3">
-              <label className="block text-sm font-medium text-gray-700">JSON</label>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <textarea
-                  className="w-full h-64 rounded-md border border-gray-300 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
-                  value={jsonText}
-                  onChange={(e) => setJsonText(e.target.value)}
-                />
-                <pre className="h-64 overflow-auto rounded-md bg-gray-900 text-green-100 text-sm p-3 font-mono whitespace-pre-wrap">
-                  {jsonText || '// Вставьте JSON слева'}
-                </pre>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Отмена
-              </Button>
-              <Button
-                onClick={() => {
-                  try {
-                    const parsed = JSON.parse(jsonText);
-                    const blob = new Blob([JSON.stringify(parsed)], { type: 'application/json' });
-                    const virtualFile = new File([blob], 'pasted-import.json', { type: 'application/json' });
-                    setFile(virtualFile);
-                    setIsModalOpen(false);
-                    setUploadError(null);
-                  } catch (err) {
-                    setUploadError('Некорректный JSON: ' + (err.message || ''));
-                  }
-                }}
-              >
-                Подставить в импорт
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
