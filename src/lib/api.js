@@ -99,13 +99,20 @@ export const locationsApi = {
 };
 
 export const importsApi = {
-  upload: (file) => {
+  upload: (file, { admin } = {}) => {
     const formData = toFormData(file);
+    const params = {};
+    if (admin) params.admin = true;
     return api.post('/api/imports', formData, {
+      params,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  list: () => api.get('/api/imports'),
+  list: ({ admin } = {}) => {
+    const params = {};
+    if (admin) params.admin = true;
+    return api.get('/api/imports', { params });
+  },
   getTemplate: () =>
     api.get('/api/imports/template', { responseType: 'blob' }),
 };
@@ -113,4 +120,6 @@ export const importsApi = {
 export const authApi = {
   login: (data) => api.post('/api/auth/login', data),
   register: (data) => api.post('/api/auth/register', data),
+  assumeAdmin: () => api.post('/api/auth/assume-admin'),
+  assumeUser: () => api.post('/api/auth/assume-user'),
 };

@@ -30,6 +30,24 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const becomeAdmin = async () => {
+    const response = await authApi.assumeAdmin();
+    const data = response.data;
+    authStorage.set(data.token, { username: data.username, role: data.role });
+    setUser({ username: data.username, role: data.role });
+    setToken(data.token);
+    return data;
+  };
+
+  const becomeUser = async () => {
+    const response = await authApi.assumeUser();
+    const data = response.data;
+    authStorage.set(data.token, { username: data.username, role: data.role });
+    setUser({ username: data.username, role: data.role });
+    setToken(data.token);
+    return data;
+  };
+
   const logout = () => {
     authStorage.clear();
     setUser(null);
@@ -43,6 +61,8 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(token),
     login,
     register,
+    becomeAdmin,
+    becomeUser,
     logout,
   }), [user, token, isReady]);
 

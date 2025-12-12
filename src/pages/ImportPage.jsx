@@ -22,14 +22,15 @@ const formatDate = (value) => {
 
 export default function ImportPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, becomeAdmin, becomeUser } = useAuth();
   const [file, setFile] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
+  const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
+  const [importedOrgs, setImportedOrgs] = useState([]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['importHistory'],
+    queryKey: ['importHistory', user?.role],
     queryFn: () => importsApi.list(),
     select: (response) => response.data || [],
     keepPreviousData: true,
@@ -46,6 +47,7 @@ export default function ImportPage() {
     mutationFn: ({ file }) => importsApi.upload(file),
     onSuccess: (response) => {
       setUploadError(null);
+      setImportedOrgs(response.data.createdOrganizations || []);
       setUploadSuccess({
         id: response.data.id,
         status: response.data.status,
@@ -101,6 +103,16 @@ export default function ImportPage() {
     uploadMutation.mutate({ file });
   };
 
+  const humanizeError = (err) => {
+    if (!err) return [];
+    const raw = typeof err === 'string' ? err : String(err);
+    const parts = raw.split(/;|,/).map((p) => p.trim()).filter(Boolean);
+    if (parts.length) return parts;
+    return [raw];
+  };
+
+  const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
+
   const renderStatus = (status) => {
     const meta = STATUS_MAP[status] || { label: status || '—', className: 'bg-gray-100 text-gray-700 border-gray-200' };
     return (
@@ -121,7 +133,32 @@ export default function ImportPage() {
             Загрузка JSON-файла с организациями и просмотр истории импортов
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={adminMode}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                setAdminMode(next);
+                try {
+                  if (next) {
+                    await becomeAdmin();
+                  } else {
+                    await becomeUser();
+                  }
+                  queryClient.invalidateQueries({ queryKey: ['importHistory'] });
+                  queryClient.refetchQueries({ queryKey: ['importHistory'] });
+                } catch (err) {
+                  setUploadError(err?.response?.data?.error || err.message || 'Не удалось сменить роль');
+                  setAdminMode(!next);
+                }
+              }}
+              disabled={!isAuthenticated}
+            />
+            <span>Режим администратора</span>
+          </label>
           <Button
             variant="secondary"
             onClick={() => templateMutation.mutate()}
@@ -136,7 +173,14 @@ export default function ImportPage() {
 
       {uploadError && (
         <Alert type="error" onClose={() => setUploadError(null)}>
-          {uploadError}
+          <div className="space-y-2">
+            <div>Не удалось выполнить импорт:</div>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              {errorItems.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          </div>
         </Alert>
       )}
       {uploadSuccess && (
@@ -173,6 +217,28 @@ export default function ImportPage() {
                   onChange={handleFileChange}
                 />
               </label>
+              {importedOrgs.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Импортированные организации</div>
+                  <select
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      const orgId = e.target.value;
+                      if (orgId) {
+                        window.location.hash = `#/organizations/${orgId}`;
+                      }
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Выберите организацию</option>
+                    {importedOrgs.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name} (ID: {org.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <Button
                 onClick={handleUpload}
                 disabled={isUploading}
