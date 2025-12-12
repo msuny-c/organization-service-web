@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { MapPin, BarChart3, Calculator, UserX, ArrowDownUp, TrendingUp } from 'lucide-react';
 import { operationsApi } from '../lib/api';
@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
 import Input, { Select } from '../components/Input';
 import Alert from '../components/Alert';
+import { useAuth } from '../context/AuthContext';
 
 const OPERATIONS = [
   { 
@@ -15,40 +16,47 @@ const OPERATIONS = [
     name: 'Минимальные координаты', 
     icon: MapPin, 
     color: 'blue',
-    description: 'Найти организацию с минимальными координатами'
+    description: 'Найти организацию с минимальными координатами',
+    requiresAuth: false,
   },
   { 
     id: 'rating', 
     name: 'Группировка по рейтингу', 
     icon: TrendingUp, 
     color: 'yellow',
-    description: 'Статистика по рейтингам организаций'
+    description: 'Статистика по рейтингам организаций',
+    requiresAuth: false,
   },
   { 
     id: 'count', 
     name: 'Подсчет по типу', 
     icon: Calculator, 
     color: 'purple',
-    description: 'Количество организаций определенного типа'
+    description: 'Количество организаций определенного типа',
+    requiresAuth: false,
   },
   { 
     id: 'dismiss', 
     name: 'Увольнение сотрудников', 
     icon: UserX, 
     color: 'orange',
-    description: 'Уволить всех сотрудников организации'
+    description: 'Уволить всех сотрудников организации',
+    requiresAuth: true,
   },
   { 
     id: 'absorb', 
     name: 'Поглощение организации', 
     icon: ArrowDownUp, 
     color: 'red',
-    description: 'Поглотить одну организацию другой'
+    description: 'Поглотить одну организацию другой',
+    requiresAuth: true,
   },
 ];
 
 export default function Operations() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const [selectedOp, setSelectedOp] = useState('minimal');
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
@@ -65,6 +73,44 @@ export default function Operations() {
     if (!value) return null;
     return typeof value === 'string' ? { message: value, type: 'error' } : value;
   };
+
+  const renderLoginPrompt = (title, description) => (
+    <Card className="border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50">
+      <CardBody className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+          <p className="text-gray-600 mt-1">{description}</p>
+        </div>
+        <Button
+          onClick={() => navigate('/login', { state: { from: location, backgroundLocation: location } })}
+          className="w-full sm:w-auto"
+        >
+          Войти
+        </Button>
+      </CardBody>
+    </Card>
+  );
+
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-blue-100 bg-gradient-to-r from-blue-50 via-white to-blue-50">
+          <CardBody className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Спецоперации требуют входа</h1>
+              <p className="text-gray-600 mt-1">Авторизуйтесь, чтобы выполнять поиск, группировки и служебные действия.</p>
+            </div>
+            <Button
+              onClick={() => navigate('/login', { state: { from: location, backgroundLocation: location } })}
+              className="w-full sm:w-auto"
+            >
+              Войти
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   const minimalMutation = useMutation({
     mutationFn: operationsApi.findMinimalCoordinates,
@@ -129,6 +175,7 @@ export default function Operations() {
     if (!operation) return null;
 
     const Icon = operation.icon;
+    const needsAuth = operation.requiresAuth && !isAuthenticated;
 
     switch (selectedOp) {
       case 'minimal': {
@@ -349,33 +396,39 @@ export default function Operations() {
                 </div>
               </CardHeader>
               <CardBody className="space-y-4">
-                <Input 
-                  id="dismissId" 
-                  type="number"
-                  label="ID организации"
-                  placeholder="Введите ID"
-                  min="1"
-                  value={dismissId}
-                  onChange={(e) => {
-                    setDismissId(e.target.value);
-                    clearError('dismiss');
-                  }}
-                />
-                <Button 
-                  variant="warning"
-                  onClick={() => {
-                    if (!dismissId) {
-                      setErrors({ ...errors, dismiss: { message: 'Введите ID организации', type: 'warning' } });
-                      setResults({ ...results, dismiss: null });
-                      return;
-                    }
-                    dismissMutation.mutate(dismissId);
-                  }} 
-                  disabled={dismissMutation.isPending}
-                  className="w-full"
-                >
-                  Уволить всех сотрудников
-                </Button>
+                {needsAuth ? (
+                  renderLoginPrompt('Требуется вход', 'Увольнение сотрудников доступно только авторизованным пользователям.')
+                ) : (
+                  <>
+                    <Input 
+                      id="dismissId" 
+                      type="number"
+                      label="ID организации"
+                      placeholder="Введите ID"
+                      min="1"
+                      value={dismissId}
+                      onChange={(e) => {
+                        setDismissId(e.target.value);
+                        clearError('dismiss');
+                      }}
+                    />
+                    <Button 
+                      variant="warning"
+                      onClick={() => {
+                        if (!dismissId) {
+                          setErrors({ ...errors, dismiss: { message: 'Введите ID организации', type: 'warning' } });
+                          setResults({ ...results, dismiss: null });
+                          return;
+                        }
+                        dismissMutation.mutate(dismissId);
+                      }} 
+                      disabled={dismissMutation.isPending}
+                      className="w-full"
+                    >
+                      Уволить всех сотрудников
+                    </Button>
+                  </>
+                )}
               </CardBody>
             </Card>
 
@@ -411,52 +464,58 @@ export default function Operations() {
                 </div>
               </CardHeader>
               <CardBody className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Input 
-                    id="absorbingId" 
-                    type="number"
-                    label="Поглощающая организация"
-                    placeholder="ID"
-                    min="1"
-                    value={absorbingId}
-                    onChange={(e) => {
-                      setAbsorbingId(e.target.value);
-                      clearError('absorb');
-                    }}
-                  />
-                  <Input 
-                    id="absorbedId" 
-                    type="number"
-                    label="Поглощаемая организация"
-                    placeholder="ID"
-                    min="1"
-                    value={absorbedId}
-                    onChange={(e) => {
-                      setAbsorbedId(e.target.value);
-                      clearError('absorb');
-                    }}
-                  />
-                </div>
-                <Button 
-                  variant="danger"
-                  onClick={() => {
-                    if (!absorbingId || !absorbedId) {
-                      setErrors({ ...errors, absorb: { message: 'Укажите оба ID организаций', type: 'warning' } });
-                      setResults({ ...results, absorb: null });
-                      return;
-                    }
-                    if (absorbingId === absorbedId) {
-                      setErrors({ ...errors, absorb: { message: 'Организация не может поглотить саму себя', type: 'error' } });
-                      setResults({ ...results, absorb: null });
-                      return;
-                    }
-                    absorbMutation.mutate({ absorbingId, absorbedId });
-                  }} 
-                  disabled={absorbMutation.isPending}
-                  className="w-full"
-                >
-                  Выполнить поглощение
-                </Button>
+                {needsAuth ? (
+                  renderLoginPrompt('Требуется вход', 'Поглощение доступно только авторизованным пользователям.')
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <Input 
+                        id="absorbingId" 
+                        type="number"
+                        label="Поглощающая организация"
+                        placeholder="ID"
+                        min="1"
+                        value={absorbingId}
+                        onChange={(e) => {
+                          setAbsorbingId(e.target.value);
+                          clearError('absorb');
+                        }}
+                      />
+                      <Input 
+                        id="absorbedId" 
+                        type="number"
+                        label="Поглощаемая организация"
+                        placeholder="ID"
+                        min="1"
+                        value={absorbedId}
+                        onChange={(e) => {
+                          setAbsorbedId(e.target.value);
+                          clearError('absorb');
+                        }}
+                      />
+                    </div>
+                    <Button 
+                      variant="danger"
+                      onClick={() => {
+                        if (!absorbingId || !absorbedId) {
+                          setErrors({ ...errors, absorb: { message: 'Укажите оба ID организаций', type: 'warning' } });
+                          setResults({ ...results, absorb: null });
+                          return;
+                        }
+                        if (absorbingId === absorbedId) {
+                          setErrors({ ...errors, absorb: { message: 'Организация не может поглотить саму себя', type: 'error' } });
+                          setResults({ ...results, absorb: null });
+                          return;
+                        }
+                        absorbMutation.mutate({ absorbingId, absorbedId });
+                      }} 
+                      disabled={absorbMutation.isPending}
+                      className="w-full"
+                    >
+                      Выполнить поглощение
+                    </Button>
+                  </>
+                )}
             </CardBody>
             </Card>
 

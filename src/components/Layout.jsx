@@ -42,16 +42,23 @@ export default function Layout() {
 
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex sm:space-x-6">
-                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className="inline-flex items-center gap-1 px-1 pt-1 text-sm font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                    {label}
-                  </Link>
-                ))}
+                {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+                  const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium transition ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm'
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {Icon && <Icon className={`h-4 w-4 ${isActive ? 'text-blue-700' : ''}`} />}
+                      {label}
+                    </Link>
+                  );
+                })}
               </div>
               <div className="hidden sm:flex items-center gap-3">
                 {isAuthenticated ? (
@@ -107,17 +114,24 @@ export default function Layout() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-gray-200">
             <div className="space-y-1 px-4 py-3">
-                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    onClick={closeMobileMenu}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  {Icon && <Icon className="h-4 w-4 text-gray-500" />}
-                  {label}
-                </Link>
-              ))}
+                {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+                  const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={closeMobileMenu}
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {Icon && <Icon className={`h-4 w-4 ${isActive ? 'text-blue-700' : 'text-gray-500'}`} />}
+                      {label}
+                    </Link>
+                  );
+                })}
               {isAuthenticated ? (
                 <button
                   type="button"
