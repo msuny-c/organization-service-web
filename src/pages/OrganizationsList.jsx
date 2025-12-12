@@ -99,10 +99,18 @@ export default function OrganizationsList() {
   const showError = isError && error && !isAbortError(error);
 
   const handleDelete = async (id) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
+      return;
+    }
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
       try {
         await organizationsApi.delete(id);
       } catch (error) {
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          navigate('/login', { state: { from: location, message: 'Сначала войдите в систему' } });
+          return;
+        }
         alert('Ошибка при удалении: ' + (error.response?.data?.message || error.message));
       }
     }

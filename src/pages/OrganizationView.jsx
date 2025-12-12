@@ -7,6 +7,7 @@ import { getTypeName } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
 import Alert from '../components/Alert';
+import { useAuth } from '../context/AuthContext';
 
 const SECTIONS = [
   { id: 'main', name: 'Основная информация', icon: Building2, color: 'blue' },
@@ -19,8 +20,10 @@ const SECTIONS = [
 export default function OrganizationView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedSection, setSelectedSection] = useState('main');
   const [hadOrgData, setHadOrgData] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const getErrorMessage = (error, fallback = 'Неизвестная ошибка') => {
     if (error?.response?.status === 404) {
@@ -68,11 +71,19 @@ export default function OrganizationView() {
   }, [error, hadOrgData, isError, navigate]);
 
   const handleDelete = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
+      return;
+    }
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
       try {
         await organizationsApi.delete(id);
         navigate('/');
       } catch (error) {
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          navigate('/login', { state: { from: location, message: 'Сначала войдите в систему' } });
+          return;
+        }
         alert('Ошибка при удалении: ' + (error.response?.data?.error || error.message));
       }
     }

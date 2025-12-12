@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { UploadCloud, FileText, UserCircle, Clock } from 'lucide-react';
+import { UploadCloud, FileText, Clock } from 'lucide-react';
 import Button from '../components/Button';
 import Card, { CardBody, CardHeader } from '../components/Card';
-import Input from '../components/Input';
 import Alert from '../components/Alert';
 import { importsApi } from '../lib/api';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -186,12 +185,6 @@ export default function ImportPage() {
               </div>
             </div>
 
-            <Input
-              label="Текущий пользователь"
-              value={user?.username || ''}
-              disabled
-            />
-
             <div className="text-xs text-gray-500">
               Файл должен содержать массив объектов OrganizationDto. Вложенные поля
               (coordinates, postalAddress, officialAddress, town) указываются в той же записи.
@@ -201,23 +194,19 @@ export default function ImportPage() {
 
         <Card className="xl:col-span-2">
           <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-gray-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">История импортов</h2>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">История импортов</h2>
                   <p className="text-sm text-gray-500">
-                    Операции текущего пользователя (администратор видит все операции)
+                    История последних импортов
                   </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <UserCircle className="h-4 w-4" />
-                {user?.username || '—'}
-              </div>
-            </div>
           </CardHeader>
           <CardBody>
             {isLoading && (
@@ -240,7 +229,9 @@ export default function ImportPage() {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
+                      {user?.role === 'ADMIN' && (
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
+                      )}
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Файл</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Добавлено</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Начало</th>
@@ -253,7 +244,9 @@ export default function ImportPage() {
                       <tr key={op.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">{op.id}</td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>
+                        {user?.role === 'ADMIN' && (
+                          <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>
+                        )}
                         <td className="px-4 py-3 text-sm text-gray-600">{op.filename || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">
                           {op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}
