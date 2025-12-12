@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UploadCloud, FileText, Clock } from 'lucide-react';
 import Button from '../components/Button';
@@ -30,15 +30,6 @@ export default function ImportPage() {
   const [importedOrgs, setImportedOrgs] = useState([]);
   const [jsonText, setJsonText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const textareaRef = useRef(null);
-  const preRef = useRef(null);
-
-  useEffect(() => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  }, [jsonText]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['importHistory', user?.role],
@@ -376,29 +367,22 @@ export default function ImportPage() {
             </div>
             <div className="p-4 space-y-3">
               <label className="block text-sm font-medium text-gray-700">JSON</label>
-              <div className="relative border border-gray-200 rounded-lg bg-gray-900 text-green-100 h-72">
-                <pre
-                  ref={preRef}
-                  className="pointer-events-none absolute inset-0 m-0 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
-                  dangerouslySetInnerHTML={{ __html: highlightedJson || '<span class="text-gray-500">// Вставьте JSON ниже</span>' }}
-                />
+              <div className="space-y-3">
                 <textarea
-                  ref={textareaRef}
-                  className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white font-mono text-sm p-4 focus:outline-none resize-none"
+                  className="w-full h-48 rounded-md border border-gray-300 p-4 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
                   value={jsonText}
                   onChange={(e) => setJsonText(e.target.value)}
                   spellCheck={false}
                   autoCorrect="off"
                   autoComplete="off"
-                  style={{ color: 'transparent' }}
-                  onScroll={(e) => {
-                    if (preRef.current) {
-                      preRef.current.scrollTop = e.target.scrollTop;
-                      preRef.current.scrollLeft = e.target.scrollLeft;
-                    }
-                  }}
                 />
+                <div className="border border-gray-200 rounded-lg bg-gray-900 text-green-100 max-h-48 overflow-auto">
+                  <pre
+                    className="p-4 font-mono text-sm whitespace-pre-wrap break-words"
+                    dangerouslySetInnerHTML={{ __html: highlightedJson || '<span class="text-gray-500">// Подсветка появится здесь</span>' }}
+                  />
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">
