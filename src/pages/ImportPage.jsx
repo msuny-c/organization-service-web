@@ -33,7 +33,7 @@ export default function ImportPage() {
     select: (response) => response.data || [],
     keepPreviousData: true,
     refetchInterval: (data) =>
-      data?.some((op) => op.status === 'IN_PROGRESS') ? 4000 : false,
+      Array.isArray(data) && data.some((op) => op.status === 'IN_PROGRESS') ? 4000 : false,
   });
 
   const uploadMutation = useMutation({
@@ -73,7 +73,8 @@ export default function ImportPage() {
     },
   });
 
-  const hasHistory = useMemo(() => (data?.length || 0) > 0, [data]);
+  const history = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const hasHistory = history.length > 0;
   const isUploading = uploadMutation.isPending;
 
   const handleFileChange = (e) => {
@@ -260,7 +261,7 @@ export default function ImportPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {data.map((op) => (
+                    {history.map((op) => (
                       <tr key={op.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">{op.id}</td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
