@@ -15,6 +15,7 @@ export default function AuthModal({ mode = 'login' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register } = useAuth();
+  const backgroundLocation = location.state?.backgroundLocation || location.state?.from || { pathname: '/' };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,14 +26,24 @@ export default function AuthModal({ mode = 'login' }) {
       } else {
         await register({ username, password });
       }
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      const fromLocation = location.state?.from || backgroundLocation;
+      const redirectPath = fromLocation?.pathname || '/';
+      const redirectSearch = fromLocation?.search || '';
+      const redirectHash = fromLocation?.hash || '';
+      navigate(`${redirectPath}${redirectSearch}${redirectHash}`, { replace: true, state: fromLocation?.state });
     } catch (err) {
       setError(err?.response?.data?.error || err.message || 'Ошибка авторизации');
     }
   };
 
-  const closeModal = () => navigate(-1);
+  const closeModal = () => {
+    if (window.history.state && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    const targetPath = `${backgroundLocation?.pathname || '/'}${backgroundLocation?.search || ''}${backgroundLocation?.hash || ''}`;
+    navigate(targetPath, { replace: true, state: backgroundLocation?.state });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -84,7 +95,15 @@ export default function AuthModal({ mode = 'login' }) {
               <button
                 type="button"
                 className="text-blue-600 hover:underline"
-                onClick={() => navigate(isLogin ? '/register' : '/login')}
+                onClick={() =>
+                  navigate(isLogin ? '/register' : '/login', {
+                    state: {
+                      backgroundLocation,
+                      from: location.state?.from || backgroundLocation,
+                      message: location.state?.message,
+                    },
+                  })
+                }
               >
                 {isLogin ? 'Создать аккаунт' : 'У меня уже есть аккаунт'}
               </button>

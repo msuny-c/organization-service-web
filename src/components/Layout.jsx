@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Building2, Menu, Settings, X, UploadCloud, LogOut, UserCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,6 +16,8 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backgroundLocation = location.state?.backgroundLocation || location;
 
   const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -74,12 +76,14 @@ export default function Layout() {
                   <>
                     <Link
                       to="/login"
+                      state={{ backgroundLocation, from: backgroundLocation }}
                       className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       Войти
                     </Link>
                     <Link
                       to="/register"
+                      state={{ backgroundLocation, from: backgroundLocation }}
                       className="inline-flex items-center gap-1 rounded-md border border-blue-500 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50"
                     >
                       Регистрация
@@ -103,11 +107,11 @@ export default function Layout() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-gray-200">
             <div className="space-y-1 px-4 py-3">
-              {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={closeMobileMenu}
+                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={closeMobileMenu}
                   className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   {Icon && <Icon className="h-4 w-4 text-gray-500" />}
@@ -127,6 +131,7 @@ export default function Layout() {
                 <div className="flex flex-col gap-2">
                   <Link
                     to="/login"
+                    state={{ backgroundLocation, from: backgroundLocation }}
                     onClick={closeMobileMenu}
                     className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full text-left"
                   >
@@ -134,6 +139,7 @@ export default function Layout() {
                   </Link>
                   <Link
                     to="/register"
+                    state={{ backgroundLocation, from: backgroundLocation }}
                     onClick={closeMobileMenu}
                     className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full text-left"
                   >

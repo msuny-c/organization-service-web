@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, ArrowUpDown } from 'lucide-react';
 import { addressesApi } from '../lib/api';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -17,6 +17,7 @@ export default function AddressesList() {
   const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
   const searchOptions = [
@@ -119,7 +120,7 @@ export default function AddressesList() {
         ) : (
           <Button
             variant="secondary"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login', { state: { from: location, backgroundLocation: location } })}
             className="w-full md:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />

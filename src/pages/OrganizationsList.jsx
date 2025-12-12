@@ -100,7 +100,7 @@ export default function OrganizationsList() {
 
   const handleDelete = async (id) => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
+      navigate('/login', { state: { from: location, backgroundLocation: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
       return;
     }
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
@@ -108,7 +108,7 @@ export default function OrganizationsList() {
         await organizationsApi.delete(id);
       } catch (error) {
         if (error?.response?.status === 401 || error?.response?.status === 403) {
-          navigate('/login', { state: { from: location, message: 'Сначала войдите в систему' } });
+          navigate('/login', { state: { from: location, backgroundLocation: location, message: 'Сначала войдите в систему' } });
           return;
         }
         alert('Ошибка при удалении: ' + (error.response?.data?.message || error.message));
@@ -163,7 +163,11 @@ export default function OrganizationsList() {
           </p>
         </div>
         <Link
-          to={isAuthenticated ? '/create' : '/login'}
+          to={
+            isAuthenticated
+              ? '/create'
+              : { pathname: '/login', state: { from: location, backgroundLocation: location } }
+          }
           className="block w-full md:inline-block md:w-auto"
         >
           <Button className="w-full md:w-auto" variant={isAuthenticated ? 'primary' : 'secondary'}>

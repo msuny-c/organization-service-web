@@ -99,7 +99,7 @@ export default function ImportPage() {
   const history = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const hasHistory = history.length > 0;
   const isUploading = uploadMutation.isPending;
-  const goToLogin = () => navigate('/login', { state: { from: location } });
+  const goToLogin = () => navigate('/login', { state: { from: location, backgroundLocation: location } });
 
   const handleFileChange = (e) => {
     const next = e.target.files?.[0];
@@ -393,6 +393,7 @@ export default function ImportPage() {
               <label className="block text-sm font-medium text-gray-700">JSON</label>
               <div className="space-y-3">
                 <Editor
+                  className="json-editor"
                   value={jsonText}
                   onValueChange={setJsonText}
                   highlight={highlight}
@@ -405,12 +406,6 @@ export default function ImportPage() {
                     minHeight: '192px',
                     maxHeight: '320px',
                     overflow: 'auto',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                    background: '#0b1120',
-                    color: '#e2e8f0',
-                    fontFamily: '"Fira Code", "Fira Mono", monospace',
-                    fontSize: '0.9rem',
                   }}
                 />
               </div>

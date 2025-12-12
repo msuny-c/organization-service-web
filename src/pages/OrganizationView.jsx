@@ -72,7 +72,7 @@ export default function OrganizationView() {
 
   const handleDelete = async () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
+      navigate('/login', { state: { from: location, backgroundLocation: location, message: 'Авторизуйтесь, чтобы удалять организации' } });
       return;
     }
     if (window.confirm('Вы уверены, что хотите удалить эту организацию?')) {
@@ -81,7 +81,7 @@ export default function OrganizationView() {
         navigate('/');
       } catch (error) {
         if (error?.response?.status === 401 || error?.response?.status === 403) {
-          navigate('/login', { state: { from: location, message: 'Сначала войдите в систему' } });
+          navigate('/login', { state: { from: location, backgroundLocation: location, message: 'Сначала войдите в систему' } });
           return;
         }
         alert('Ошибка при удалении: ' + (error.response?.data?.error || error.message));
