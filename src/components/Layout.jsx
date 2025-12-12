@@ -21,7 +21,7 @@ export default function Layout() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
   const handleLogout = () => {
     logout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   return (

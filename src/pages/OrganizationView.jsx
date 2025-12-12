@@ -266,22 +266,24 @@ export default function OrganizationView() {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          <Link to={`/organizations/${id}/edit`} className="block w-full sm:inline-block sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Pencil className="h-4 w-4 mr-2" />
-              Редактировать
+        {isAuthenticated && (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+            <Link to={`/organizations/${id}/edit`} className="block w-full sm:inline-block sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Pencil className="h-4 w-4 mr-2" />
+                Редактировать
+              </Button>
+            </Link>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              className="w-full sm:w-auto"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить
             </Button>
-          </Link>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            className="w-full sm:w-auto"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Удалить
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">

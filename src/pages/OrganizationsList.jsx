@@ -314,24 +314,28 @@ export default function OrganizationsList() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Link
-                            to={`/organizations/${org.id}/edit`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="outline" size="sm">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(org.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
+                          {isAuthenticated && (
+                            <>
+                              <Link
+                                to={`/organizations/${org.id}/edit`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button variant="outline" size="sm">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(org.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UploadCloud, FileText, Clock } from 'lucide-react';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
 import Button from '../components/Button';
 import Card, { CardBody, CardHeader } from '../components/Card';
 import Alert from '../components/Alert';
@@ -23,6 +27,8 @@ const formatDate = (value) => {
 export default function ImportPage() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, becomeAdmin, becomeUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [file, setFile] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
@@ -31,19 +37,26 @@ export default function ImportPage() {
   const [jsonText, setJsonText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const shouldFetchHistory = isAuthenticated;
+
+  useEffect(() => {
+    setAdminMode(user?.role === 'ADMIN');
+  }, [user?.role]);
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['importHistory', user?.role],
+    queryKey: ['importHistory'],
     queryFn: () => importsApi.list(),
     select: (response) => response.data || [],
     keepPreviousData: true,
     refetchInterval: (data) =>
       Array.isArray(data) && data.some((op) => op.status === 'IN_PROGRESS') ? 4000 : false,
+    enabled: shouldFetchHistory,
   });
 
-  useWebSocket('/topic/imports', () => {
+  useWebSocket(shouldFetchHistory ? '/topic/imports' : null, () => {
     queryClient.invalidateQueries({ queryKey: ['importHistory'] });
     queryClient.refetchQueries({ queryKey: ['importHistory'] });
-  });
+  }, { enabled: shouldFetchHistory });
 
   const uploadMutation = useMutation({
     mutationFn: ({ file }) => importsApi.upload(file),
@@ -86,6 +99,7 @@ export default function ImportPage() {
   const history = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const hasHistory = history.length > 0;
   const isUploading = uploadMutation.isPending;
+  const goToLogin = () => navigate('/login', { state: { from: location } });
 
   const handleFileChange = (e) => {
     const next = e.target.files?.[0];
@@ -122,24 +136,8 @@ export default function ImportPage() {
 
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
 
-  const highlightedJson = useMemo(() => {
-    const json = jsonText || '';
-    const escaped = json
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    return escaped.replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?=\s*:))|("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g,
-      (match, key, _k2, str, _s2, bool) => {
-        let cls = 'text-emerald-300';
-        if (key) cls = 'text-sky-300';
-        else if (bool) cls = 'text-amber-300';
-        else if (/^-?\d/.test(match)) cls = 'text-purple-300';
-        return `<span class="${cls}">${match}</span>`;
-      }
-    );
-  }, [jsonText]);
+  const highlight = (code) =>
+    Prism.highlight(code, Prism.languages.json, 'json');
 
   const renderStatus = (status) => {
     const meta = STATUS_MAP[status] || { label: status || '—', className: 'bg-gray-100 text-gray-700 border-gray-200' };
@@ -150,7 +148,9 @@ export default function ImportPage() {
     );
   };
 
-  const errorMessage = error?.response?.data?.error || error?.message;
+  const historyError = shouldFetchHistory ? error : null;
+  const errorMessage = historyError?.response?.data?.error || historyError?.message;
+  const historyLoading = shouldFetchHistory && isLoading;
 
   return (
     <div className="space-y-6">
@@ -162,31 +162,33 @@ export default function ImportPage() {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              checked={adminMode}
-              onChange={async (e) => {
-                const next = e.target.checked;
-                setAdminMode(next);
-                try {
-                  if (next) {
-                    await becomeAdmin();
-                  } else {
-                    await becomeUser();
+          {isAuthenticated && (
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={adminMode}
+                onChange={async (e) => {
+                  const next = e.target.checked;
+                  setAdminMode(next);
+                  try {
+                    if (next) {
+                      await becomeAdmin();
+                    } else {
+                      await becomeUser();
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['importHistory'] });
+                    queryClient.refetchQueries({ queryKey: ['importHistory'] });
+                  } catch (err) {
+                    setUploadError(err?.response?.data?.error || err.message || 'Не удалось сменить роль');
+                    setAdminMode(!next);
                   }
-                  queryClient.invalidateQueries({ queryKey: ['importHistory'] });
-                  queryClient.refetchQueries({ queryKey: ['importHistory'] });
-                } catch (err) {
-                  setUploadError(err?.response?.data?.error || err.message || 'Не удалось сменить роль');
-                  setAdminMode(!next);
-                }
-              }}
-              disabled={!isAuthenticated}
-            />
-            <span>Режим администратора</span>
-          </label>
+                }}
+                disabled={!isAuthenticated}
+              />
+              <span>Режим администратора</span>
+            </label>
+          )}
           <Button
             variant="secondary"
             onClick={() => templateMutation.mutate()}
@@ -196,13 +198,15 @@ export default function ImportPage() {
             <FileText className="h-4 w-4 mr-2" />
             Шаблон
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsModalOpen(true)}
-            className="whitespace-nowrap"
-          >
-            Вставить JSON
-          </Button>
+          {isAuthenticated && (
+            <Button
+              variant="outline"
+              onClick={() => setIsModalOpen(true)}
+              className="whitespace-nowrap"
+            >
+              Вставить JSON
+            </Button>
+          )}
         </div>
       </div>
 
@@ -274,14 +278,24 @@ export default function ImportPage() {
                   </select>
                 </div>
               )}
-              <Button
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="w-full mt-2"
-              >
-                <UploadCloud className="h-4 w-4 mr-2" />
-                Импортировать
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className="w-full mt-4"
+                >
+                  <UploadCloud className="h-4 w-4 mr-2" />
+                  Импортировать
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={goToLogin}
+                  className="w-full mt-4"
+                >
+                  Войти для импорта
+                </Button>
+              )}
             </div>
           </CardBody>
         </Card>
@@ -303,20 +317,30 @@ export default function ImportPage() {
               </div>
           </CardHeader>
           <CardBody className="p-0">
-            {isLoading && (
+            {!shouldFetchHistory && (
+              <div className="py-10 text-center text-gray-500">
+                История доступна после входа в систему.
+                <div className="mt-3 flex justify-center">
+                  <Button variant="outline" size="sm" onClick={goToLogin}>
+                    Войти
+                  </Button>
+                </div>
+              </div>
+            )}
+            {shouldFetchHistory && historyLoading && (
               <div className="py-10 text-center text-gray-500">Загрузка истории...</div>
             )}
-            {!isLoading && error && (
+            {shouldFetchHistory && !historyLoading && historyError && (
               <Alert type="error" onClose={() => queryClient.removeQueries({ queryKey: ['importHistory'] })}>
                 Не удалось загрузить историю: {errorMessage || 'Попробуйте обновить страницу'}
               </Alert>
             )}
 
-            {!isLoading && !error && !hasHistory && (
+            {shouldFetchHistory && !historyLoading && !historyError && !hasHistory && (
               <div className="py-10 text-center text-gray-500">Операции импорта пока не выполнялись</div>
             )}
 
-            {!isLoading && !error && hasHistory && (
+            {shouldFetchHistory && !historyLoading && !historyError && hasHistory && (
               <div className="overflow-x-auto max-h-[520px]">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -368,21 +392,27 @@ export default function ImportPage() {
             <div className="p-4 space-y-3">
               <label className="block text-sm font-medium text-gray-700">JSON</label>
               <div className="space-y-3">
-                <textarea
-                  className="w-full h-48 rounded-md border border-gray-300 p-4 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
+                <Editor
                   value={jsonText}
-                  onChange={(e) => setJsonText(e.target.value)}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoComplete="off"
+                  onValueChange={setJsonText}
+                  highlight={highlight}
+                  padding={12}
+                  textareaId="json-editor"
+                  textareaClassName="focus:outline-none"
+                  preClassName="font-mono text-sm leading-5"
+                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
+                  style={{
+                    minHeight: '192px',
+                    maxHeight: '320px',
+                    overflow: 'auto',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.5rem',
+                    background: '#0b1120',
+                    color: '#e2e8f0',
+                    fontFamily: '"Fira Code", "Fira Mono", monospace',
+                    fontSize: '0.9rem',
+                  }}
                 />
-                <div className="border border-gray-200 rounded-lg bg-gray-900 text-green-100 max-h-48 overflow-auto">
-                  <pre
-                    className="p-4 font-mono text-sm whitespace-pre-wrap break-words"
-                    dangerouslySetInnerHTML={{ __html: highlightedJson || '<span class="text-gray-500">// Подсветка появится здесь</span>' }}
-                  />
-                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">

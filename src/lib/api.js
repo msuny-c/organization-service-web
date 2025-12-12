@@ -99,20 +99,13 @@ export const locationsApi = {
 };
 
 export const importsApi = {
-  upload: (file, { admin } = {}) => {
+  upload: (file) => {
     const formData = toFormData(file);
-    const params = {};
-    if (admin) params.admin = true;
     return api.post('/api/imports', formData, {
-      params,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  list: ({ admin } = {}) => {
-    const params = {};
-    if (admin) params.admin = true;
-    return api.get('/api/imports', { params });
-  },
+  list: () => api.get('/api/imports'),
   getTemplate: () =>
     api.get('/api/imports/template', { responseType: 'blob' }),
 };

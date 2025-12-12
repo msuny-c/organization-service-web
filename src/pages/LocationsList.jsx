@@ -7,6 +7,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import Button from '../components/Button';
 import Card, { CardBody } from '../components/Card';
 import Alert from '../components/Alert';
+import { useAuth } from '../context/AuthContext';
 
 export default function LocationsList() {
   const [search, setSearch] = useState('');
@@ -16,6 +17,7 @@ export default function LocationsList() {
   const [dir, setDir] = useState('asc');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const searchOptions = [
     { value: 'name', label: 'Название' },
@@ -107,10 +109,21 @@ export default function LocationsList() {
           <h1 className="text-3xl font-bold text-gray-900">Локации</h1>
           <p className="mt-1 text-sm text-gray-500">Справочник локаций</p>
         </div>
-        <Button onClick={() => navigate('/locations/create')} className="w-full md:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Создать
-        </Button>
+        {isAuthenticated ? (
+          <Button onClick={() => navigate('/locations/create')} className="w-full md:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Создать
+          </Button>
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/login')}
+            className="w-full md:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Войти для создания
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -197,22 +210,26 @@ export default function LocationsList() {
                     <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">{l.y}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap sm:px-6 sm:py-4">{l.z}</td>
                     <td className="px-4 py-3 text-sm font-medium text-right whitespace-nowrap sm:px-6 sm:py-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/locations/${l.id}/edit`)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(l.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
+                      {isAuthenticated ? (
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/locations/${l.id}/edit`)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(l.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">Войдите для действий</span>
+                      )}
                     </td>
                   </tr>
                 ))}

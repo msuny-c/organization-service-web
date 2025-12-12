@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
-export const useWebSocket = (topic, onMessage) => {
+export const useWebSocket = (topic, onMessage, { enabled = true } = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef(null);
   const topicRef = useRef(topic);
@@ -14,6 +14,14 @@ export const useWebSocket = (topic, onMessage) => {
   }, [topic, onMessage]);
 
   useEffect(() => {
+    if (!enabled || !topicRef.current) {
+      if (clientRef.current && clientRef.current.connected) {
+        clientRef.current.deactivate();
+      }
+      setIsConnected(false);
+      return undefined;
+    }
+
     const wsUrl = '/ws';
     console.log('WebSocket URL:', wsUrl);
     
@@ -60,6 +68,6 @@ export const useWebSocket = (topic, onMessage) => {
         clientRef.current.deactivate();
       }
     };
-  }, []);
+  }, [enabled, topic]);
   return { isConnected };
 };
