@@ -53,10 +53,14 @@ export default function ImportPage() {
     enabled: shouldFetchHistory,
   });
 
-  useWebSocket(shouldFetchHistory ? '/topic/imports' : null, () => {
-    queryClient.invalidateQueries({ queryKey: ['importHistory'] });
-    queryClient.refetchQueries({ queryKey: ['importHistory'] });
-  }, { enabled: shouldFetchHistory });
+  useWebSocket(
+    shouldFetchHistory ? '/topic/imports' : null,
+    () => {
+      queryClient.invalidateQueries({ queryKey: ['importHistory'] });
+      queryClient.refetchQueries({ queryKey: ['importHistory'] });
+    },
+    { enabled: shouldFetchHistory }
+  );
 
   const uploadMutation = useMutation({
     mutationFn: ({ file }) => importsApi.upload(file),
@@ -136,11 +140,13 @@ export default function ImportPage() {
 
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
 
-  const highlight = (code) =>
-    Prism.highlight(code, Prism.languages.json, 'json');
+  const highlight = (code) => Prism.highlight(code, Prism.languages.json, 'json');
 
   const renderStatus = (status) => {
-    const meta = STATUS_MAP[status] || { label: status || '—', className: 'bg-gray-100 text-gray-700 border-gray-200' };
+    const meta = STATUS_MAP[status] || {
+      label: status || '—',
+      className: 'bg-gray-100 text-gray-700 border-gray-200',
+    };
     return (
       <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${meta.className}`}>
         {meta.label}
@@ -157,9 +163,7 @@ export default function ImportPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Импорт организаций</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Загрузка JSON-файла с организациями и просмотр истории импортов
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Загрузка JSON-файла с организациями и просмотр истории импортов</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           {isAuthenticated && (
@@ -199,11 +203,7 @@ export default function ImportPage() {
             Шаблон
           </Button>
           {isAuthenticated && (
-            <Button
-              variant="outline"
-              onClick={() => setIsModalOpen(true)}
-              className="whitespace-nowrap"
-            >
+            <Button variant="outline" onClick={() => setIsModalOpen(true)} className="whitespace-nowrap">
               Вставить JSON
             </Button>
           )}
@@ -249,12 +249,7 @@ export default function ImportPage() {
                 <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
                   {file ? file.name : 'Выберите .json файл'}
                 </div>
-                <input
-                  type="file"
-                  accept=".json,application/json"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                <input type="file" accept=".json,application/json" className="hidden" onChange={handleFileChange} />
               </label>
               {importedOrgs.length > 0 && (
                 <div className="space-y-2">
@@ -269,7 +264,9 @@ export default function ImportPage() {
                     }}
                     defaultValue=""
                   >
-                    <option value="" disabled>Выберите организацию</option>
+                    <option value="" disabled>
+                      Выберите организацию
+                    </option>
                     {importedOrgs.map((org) => (
                       <option key={org.id} value={org.id}>
                         {org.name} (ID: {org.id})
@@ -279,20 +276,12 @@ export default function ImportPage() {
                 </div>
               )}
               {isAuthenticated ? (
-                <Button
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="w-full mt-4"
-                >
+                <Button onClick={handleUpload} disabled={isUploading} className="w-full mt-4">
                   <UploadCloud className="h-4 w-4 mr-2" />
                   Импортировать
                 </Button>
               ) : (
-                <Button
-                  variant="secondary"
-                  onClick={goToLogin}
-                  className="w-full mt-4"
-                >
+                <Button variant="secondary" onClick={goToLogin} className="w-full mt-4">
                   Войти для импорта
                 </Button>
               )}
@@ -302,19 +291,17 @@ export default function ImportPage() {
 
         <Card className="xl:col-span-2 h-full">
           <CardHeader>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-gray-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">История импортов</h2>
-                  <p className="text-sm text-gray-500">
-                    История последних импортов
-                  </p>
-                  </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-gray-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">История импортов</h2>
+                  <p className="text-sm text-gray-500">История последних импортов</p>
                 </div>
               </div>
+            </div>
           </CardHeader>
           <CardBody className="p-0">
             {!shouldFetchHistory && (
@@ -327,9 +314,7 @@ export default function ImportPage() {
                 </div>
               </div>
             )}
-            {shouldFetchHistory && historyLoading && (
-              <div className="py-10 text-center text-gray-500">Загрузка истории...</div>
-            )}
+            {shouldFetchHistory && historyLoading && <div className="py-10 text-center text-gray-500">Загрузка истории...</div>}
             {shouldFetchHistory && !historyLoading && historyError && (
               <Alert type="error" onClose={() => queryClient.removeQueries({ queryKey: ['importHistory'] })}>
                 Не удалось загрузить историю: {errorMessage || 'Попробуйте обновить страницу'}
@@ -359,12 +344,8 @@ export default function ImportPage() {
                       <tr key={op.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">{op.id}</td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
-                        {user?.role === 'ADMIN' && (
-                          <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>
-                        )}
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}
-                        </td>
+                        {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>}
+                        <td className="px-4 py-3 text-sm text-gray-700">{op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatDate(op.startedAt)}</td>
                       </tr>
                     ))}
@@ -385,22 +366,17 @@ export default function ImportPage() {
             }
           }}
         >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-3xl w-full"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full" onMouseDown={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <h3 className="text-lg font-semibold text-gray-900">Вставка JSON</h3>
-              <button
-                type="button"
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setIsModalOpen(false)}
-              >
+              <button type="button" className="text-gray-500 hover:text-gray-700" onClick={() => setIsModalOpen(false)}>
                 ✕
               </button>
             </div>
+
             <div className="p-4 space-y-3">
               <label className="block text-sm font-medium text-gray-700">JSON</label>
+
               <div className="space-y-3">
                 <Editor
                   className="json-editor"
@@ -411,15 +387,12 @@ export default function ImportPage() {
                   textareaId="json-editor"
                   textareaClassName="json-editor__textarea focus:outline-none"
                   preClassName="json-editor__pre"
+                  textareaProps={{ spellCheck: false }}
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
-                  style={{
-                    minHeight: '192px',
-                    maxHeight: '320px',
-                    overflow: 'auto',
-                  }}
                 />
               </div>
             </div>
+
             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>
                 Отмена

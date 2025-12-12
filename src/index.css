@@ -7,43 +7,82 @@
   }
 }
 
+/* =========================
+   JSON Editor (react-simple-code-editor)
+   ========================= */
+
+/* Важно: НЕ задаём overflow на pre отдельно, иначе будут два независимых скролла
+   и начнутся рассинхроны. Скролл будет только у textarea. */
+
 .json-editor {
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   background: #0b1120;
   color: #e2e8f0;
-  overflow: auto;
-  position: relative;
-  font-family: "Fira Code", "Fira Mono", monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  tab-size: 2ch;
-}
 
-.json-editor pre {
-  margin: 0;
+  position: relative;
+
+  font-family: "Fira Code", "Fira Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 14px;
+
+  /* Явно фиксируем line-height в пикселях — меньше шансов на округления/расхождения */
+  line-height: 20px;
+
+  /* tab-size лучше числом, не 2ch */
+  tab-size: 2;
+
+  /* Высота редактора */
   min-height: 192px;
   max-height: 320px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-  padding: 12px;
+
+  /* Контейнер обрезает, скроллим textarea */
+  overflow: hidden;
 }
 
-.json-editor code {
+/* Одинаковые “метрики” для обоих слоёв (textarea и pre) */
+.json-editor__textarea,
+.json-editor__pre {
+  box-sizing: border-box;
+
   font-family: inherit;
   font-size: inherit;
+  line-height: inherit;
+  tab-size: inherit;
+
+  /* ВАЖНО: одинаковые переносы */
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.json-editor .npm__react-simple-code-editor__textarea {
+/* Подсветка (pre) должна быть клика-недоступной */
+.json-editor__pre {
+  margin: 0;
+  pointer-events: none;
+}
+
+/* Prism может пытаться переопределять code/pre — фиксируем наследование */
+.json-editor__pre code {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Реальный ввод (textarea) */
+.json-editor__textarea {
   color: transparent;
+  -webkit-text-fill-color: transparent;
   caret-color: #38bdf8;
+
   outline: none;
-  padding: 12px;
   background: transparent;
+
+  /* Один скролл — здесь */
+  overflow: auto;
 }
 
-.json-editor .npm__react-simple-code-editor__textarea::selection {
+/* Выделение текста */
+.json-editor__textarea::selection {
   background-color: rgba(56, 189, 248, 0.35);
 }
