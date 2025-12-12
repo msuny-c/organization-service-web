@@ -37,10 +37,6 @@ export default function AuthModal({ mode = 'login' }) {
   };
 
   const closeModal = () => {
-    if (window.history.state && window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
     const targetPath = `${backgroundLocation?.pathname || '/'}${backgroundLocation?.search || ''}${backgroundLocation?.hash || ''}`;
     navigate(targetPath, { replace: true, state: backgroundLocation?.state });
   };
@@ -105,6 +101,7 @@ export default function AuthModal({ mode = 'login' }) {
                 className="text-blue-600 hover:underline"
                 onClick={() =>
                   navigate(isLogin ? '/register' : '/login', {
+                    replace: true,
                     state: {
                       backgroundLocation,
                       from: location.state?.from || backgroundLocation,
