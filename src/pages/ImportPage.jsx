@@ -28,6 +28,8 @@ export default function ImportPage() {
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
   const [importedOrgs, setImportedOrgs] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [jsonText, setJsonText] = useState('');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['importHistory', user?.role],
@@ -107,8 +109,15 @@ export default function ImportPage() {
     if (!err) return [];
     const raw = typeof err === 'string' ? err : String(err);
     const parts = raw.split(/;|,/).map((p) => p.trim()).filter(Boolean);
-    if (parts.length) return parts;
-    return [raw];
+    if (!parts.length) return [raw];
+
+    const first = parts[0];
+    const match = first.match(/Ошибка в записи #(\d+)/);
+    if (match) {
+      const prefix = `Ошибка в записи #${match[1]}`;
+      return parts.map((p, idx) => (idx === 0 ? p : `${prefix}: ${p}`));
+    }
+    return parts;
   };
 
   const errorItems = useMemo(() => humanizeError(uploadError), [uploadError]);
@@ -168,6 +177,13 @@ export default function ImportPage() {
             <FileText className="h-4 w-4 mr-2" />
             Шаблон
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsModalOpen(true)}
+            className="whitespace-nowrap"
+          >
+            Вставить JSON
+          </Button>
         </div>
       </div>
 
@@ -203,8 +219,8 @@ export default function ImportPage() {
               </div>
             </div>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="space-y-3">
+          <CardBody className="space-y-6">
+            <div className="space-y-4">
               <label className="block text-sm font-medium text-gray-700">Файл</label>
               <label className="flex-1 cursor-pointer">
                 <div className="w-full rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-700 transition">
@@ -324,6 +340,58 @@ export default function ImportPage() {
           </CardBody>
         </Card>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <h3 className="text-lg font-semibold text-gray-900">Вставка JSON</h3>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <label className="block text-sm font-medium text-gray-700">JSON</label>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <textarea
+                  className="w-full h-64 rounded-md border border-gray-300 p-3 font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
+                  value={jsonText}
+                  onChange={(e) => setJsonText(e.target.value)}
+                />
+                <pre className="h-64 overflow-auto rounded-md bg-gray-900 text-green-100 text-sm p-3 font-mono whitespace-pre-wrap">
+                  {jsonText || '// Вставьте JSON слева'}
+                </pre>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-4 py-3">
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Отмена
+              </Button>
+              <Button
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(jsonText);
+                    const blob = new Blob([JSON.stringify(parsed)], { type: 'application/json' });
+                    const virtualFile = new File([blob], 'pasted-import.json', { type: 'application/json' });
+                    setFile(virtualFile);
+                    setIsModalOpen(false);
+                    setUploadError(null);
+                  } catch (err) {
+                    setUploadError('Некорректный JSON: ' + (err.message || ''));
+                  }
+                }}
+              >
+                Подставить в импорт
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
