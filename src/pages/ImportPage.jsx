@@ -286,7 +286,7 @@ export default function ImportPage() {
           </CardBody>
         </Card>
 
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-2 h-full">
           <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -317,7 +317,7 @@ export default function ImportPage() {
             )}
 
             {!isLoading && !error && hasHistory && (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[520px]">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
