@@ -369,7 +369,7 @@ export default function ImportPage() {
               <label className="block text-sm font-medium text-gray-700">JSON</label>
               <div className="relative border border-gray-200 rounded-lg bg-gray-900 text-green-100">
                 <pre
-                  className="h-72 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
+                  className="pointer-events-none h-72 overflow-auto p-4 font-mono text-sm whitespace-pre-wrap break-words"
                   dangerouslySetInnerHTML={{ __html: highlightedJson || '// Вставьте JSON ниже' }}
                 />
                 <textarea
@@ -377,6 +377,10 @@ export default function ImportPage() {
                   placeholder='[ { "name": "Org", "coordinates": { "x": 1, "y": 2 }, ... } ]'
                   value={jsonText}
                   onChange={(e) => setJsonText(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoComplete="off"
+                  style={{ color: 'transparent' }}
                 />
               </div>
             </div>
