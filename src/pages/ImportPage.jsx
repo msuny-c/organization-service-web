@@ -382,7 +382,7 @@ export default function ImportPage() {
                         </td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {op.storageFileName ? (
+                          {op.status === 'SUCCESS' && op.storageFileName ? (
                             <div className="flex items-center gap-3">
                               <div className="min-w-0">
                                 <div className="truncate font-medium">{op.storageFileName}</div>
@@ -404,7 +404,9 @@ export default function ImportPage() {
                           )}
                         </td>
                         {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>}
-                        <td className="px-4 py-3 text-sm text-gray-700">{op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {op.status === 'SUCCESS' ? (op.addedCount ?? 0) : 0}
+                        </td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatDate(op.startedAt)}</td>
                       </tr>
                     ))}
