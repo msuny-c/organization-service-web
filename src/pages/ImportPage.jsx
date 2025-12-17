@@ -406,10 +406,15 @@ export default function ImportPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700 max-w-[220px]">
                           {op.errorMessage ? (
-                            <span className="inline-flex items-center gap-2 text-red-700">
-                              <FileWarning className="h-4 w-4" />
-                              <span className="truncate" title={op.errorMessage}>{op.errorMessage}</span>
-                            </span>
+                            <div className="flex items-start gap-2 text-red-700 min-w-0">
+                              <FileWarning className="h-4 w-4 flex-shrink-0" />
+                              <span
+                                className="text-sm break-words whitespace-normal leading-tight"
+                                title={op.errorMessage}
+                              >
+                                {op.errorMessage}
+                              </span>
+                            </div>
                           ) : (
                             <span className="text-gray-500">—</span>
                           )}
