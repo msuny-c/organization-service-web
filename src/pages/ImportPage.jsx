@@ -366,7 +366,6 @@ export default function ImportPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Файл</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Комментарий</th>
                       {user?.role === 'ADMIN' && (
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
                       )}
@@ -402,21 +401,6 @@ export default function ImportPage() {
                             </div>
                           ) : (
                             <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700 max-w-[220px]">
-                          {op.errorMessage ? (
-                            <div className="flex items-start gap-2 text-red-700 min-w-0">
-                              <FileWarning className="h-4 w-4 flex-shrink-0" />
-                              <span
-                                className="text-sm break-words whitespace-normal leading-tight"
-                                title={op.errorMessage}
-                              >
-                                {op.errorMessage}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">—</span>
                           )}
                         </td>
                         {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>}
