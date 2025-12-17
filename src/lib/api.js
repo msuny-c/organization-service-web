@@ -108,6 +108,7 @@ export const importsApi = {
   list: () => api.get('/api/imports'),
   getTemplate: (objectType = 'ORGANIZATION') =>
     api.get('/api/imports/template', { responseType: 'blob', params: { objectType } }),
+  downloadFile: (id) => api.get(`/api/imports/${id}/file`, { responseType: 'blob' }),
 };
 
 export const authApi = {
@@ -115,4 +116,9 @@ export const authApi = {
   register: (data) => api.post('/api/auth/register', data),
   assumeAdmin: () => api.post('/api/auth/assume-admin'),
   assumeUser: () => api.post('/api/auth/assume-user'),
+};
+
+export const cacheApi = {
+  getLoggingStatus: () => api.get('/api/cache/statistics/logging'),
+  setLoggingStatus: (enabled) => api.post('/api/cache/statistics/logging', null, { params: { enabled } }),
 };

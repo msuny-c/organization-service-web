@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { MapPin, BarChart3, Calculator, UserX, ArrowDownUp, TrendingUp } from 'lucide-react';
-import { operationsApi } from '../lib/api';
+import { cacheApi, operationsApi } from '../lib/api';
 import { ORGANIZATION_TYPES } from '../lib/constants';
 import Button from '../components/Button';
 import Card, { CardHeader, CardBody } from '../components/Card';
@@ -26,6 +26,15 @@ const OPERATIONS = [
     color: 'yellow',
     description: 'Статистика по рейтингам организаций',
     requiresAuth: false,
+  },
+  { 
+    id: 'cache-logging', 
+    name: 'Логирование L2-кэша', 
+    icon: BarChart3, 
+    color: 'blue',
+    description: 'Включение/выключение логов второго уровня JPA',
+    requiresAuth: true,
+    adminOnly: true,
   },
   { 
     id: 'count', 
@@ -56,7 +65,7 @@ const OPERATIONS = [
 export default function Operations() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, becomeAdmin } = useAuth();
   const [selectedOp, setSelectedOp] = useState('minimal');
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
@@ -64,6 +73,7 @@ export default function Operations() {
   const [dismissId, setDismissId] = useState('');
   const [absorbingId, setAbsorbingId] = useState('');
   const [absorbedId, setAbsorbedId] = useState('');
+  const isAdmin = user?.role === 'ADMIN';
 
   const clearError = (key) => {
     setErrors(prev => ({ ...prev, [key]: null }));
@@ -131,6 +141,30 @@ export default function Operations() {
       setErrors({ ...errors, absorb: error.response?.data?.error || error.message });
     },
   });
+
+  const { data: cacheLoggingEnabled, isLoading: cacheStatusLoading, refetch: refetchCacheStatus } = useQuery({
+    queryKey: ['cacheLoggingStatus'],
+    queryFn: () => cacheApi.getLoggingStatus(),
+    select: (data) => data.data?.loggingEnabled ?? false,
+    enabled: isAuthenticated && isAdmin,
+    onError: (error) => {
+      setErrors((prev) => ({ ...prev, cacheLogging: error.response?.data?.error || error.message }));
+    },
+  });
+
+  const toggleCacheLoggingMutation = useMutation({
+    mutationFn: (enabled) => cacheApi.setLoggingStatus(enabled),
+    onSuccess: async () => {
+      setErrors((prev) => ({ ...prev, cacheLogging: null }));
+      setResults((prev) => ({ ...prev, cacheLogging: { success: 'Статистика кэша обновлена' } }));
+      await refetchCacheStatus();
+    },
+    onError: (error) => {
+      setResults((prev) => ({ ...prev, cacheLogging: null }));
+      setErrors((prev) => ({ ...prev, cacheLogging: error.response?.data?.error || error.message }));
+    },
+  });
+  const loggingEnabled = useMemo(() => cacheLoggingEnabled ?? false, [cacheLoggingEnabled]);
 
   const renderOperationContent = () => {
     const operation = OPERATIONS.find(op => op.id === selectedOp);
@@ -266,6 +300,163 @@ export default function Operations() {
                   </div>
                 </CardBody>
               </Card>
+            )}
+          </div>
+        );
+      }
+
+      case 'cache-logging': {
+        const cacheError = resolveAlert(errors.cacheLogging);
+        const successMessage = results.cacheLogging?.success;
+
+        if (!isAuthenticated) {
+          return (
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-xl font-semibold">Логирование L2-кэша</h2>
+                    <p className="text-sm text-gray-500">Требуется авторизация администратора</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <p className="text-gray-600 text-sm">
+                  Управление логированием статистики второго уровня кэша доступно только авторизованным пользователям.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/login', { state: { from: location, backgroundLocation: location } })}
+                  className="w-full"
+                >
+                  Войти
+                </Button>
+              </CardBody>
+            </Card>
+          );
+        }
+
+        if (!isAdmin) {
+          return (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="text-center sm:text-left">
+                      <h2 className="text-xl font-semibold">Только для администратора</h2>
+                      <p className="text-sm text-gray-500">Переключитесь в режим ADMIN, чтобы управлять логами</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardBody className="space-y-4">
+                  <p className="text-gray-600 text-sm">
+                    Логирование статистики L2 кэша влияет на системные логи и доступно только администраторам.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await becomeAdmin();
+                        setErrors((prev) => ({ ...prev, cacheLogging: null }));
+                        setResults((prev) => ({ ...prev, cacheLogging: null }));
+                        refetchCacheStatus();
+                      } catch (error) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          cacheLogging: error.response?.data?.error || error.message || 'Не удалось переключить роль',
+                        }));
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    Стать администратором
+                  </Button>
+                </CardBody>
+              </Card>
+              {cacheError && (
+                <Alert type={cacheError.type} onClose={() => clearError('cacheLogging')}>
+                  {cacheError.message}
+                </Alert>
+              )}
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-xl font-semibold">Логирование L2-кэша</h2>
+                    <p className="text-sm text-gray-500">Управление выводом статистики hit/miss в лог</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="text-sm text-gray-600">Текущее состояние</div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {loggingEnabled ? 'Логирование включено' : 'Логирование выключено'}
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      loggingEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {loggingEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  При включении в логах будут появляться hit/miss второго уровня Hibernate после вызовов репозиториев/сервисов.
+                  Можно использовать для демонстрации работы Ehcache.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-gray-500">
+                    Изменение применяется сразу, без перезапуска приложения.
+                  </div>
+                  <Button
+                    variant={loggingEnabled ? 'outline' : 'primary'}
+                    onClick={() => {
+                      setResults((prev) => ({ ...prev, cacheLogging: null }));
+                      toggleCacheLoggingMutation.mutate(!loggingEnabled);
+                    }}
+                    disabled={cacheStatusLoading || toggleCacheLoggingMutation.isPending}
+                    className="whitespace-nowrap"
+                  >
+                    {loggingEnabled ? 'Выключить логирование' : 'Включить логирование'}
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+
+            {cacheStatusLoading && (
+              <Alert type="warning">
+                Проверяем состояние логирования...
+              </Alert>
+            )}
+
+            {cacheError && (
+              <Alert type={cacheError.type} onClose={() => clearError('cacheLogging')}>
+                {cacheError.message}
+              </Alert>
+            )}
+
+            {successMessage && !cacheError && (
+              <Alert type="success" onClose={() => setResults((prev) => ({ ...prev, cacheLogging: null }))}>
+                {successMessage}
+              </Alert>
             )}
           </div>
         );
@@ -536,16 +727,23 @@ export default function Operations() {
               {OPERATIONS.map((op) => {
                 const Icon = op.icon;
                 const isActive = selectedOp === op.id;
+                const locked = op.adminOnly && !isAdmin;
                 return (
                   <button
                     key={op.id}
                     onClick={() => setSelectedOp(op.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all cursor-pointer
                       ${isActive ? 'border-l-4' : 'border-transparent'}
-                      ${getColorClasses(op.color, isActive)}`}
+                      ${getColorClasses(op.color, isActive)}
+                      ${locked ? 'opacity-70' : ''}`}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
-                    <span className="text-sm font-medium text-left">{op.name}</span>
+                    <span className="text-sm font-medium text-left flex-1">{op.name}</span>
+                    {op.adminOnly && (
+                      <span className="text-[10px] uppercase tracking-wide text-gray-600 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded">
+                        Admin
+                      </span>
+                    )}
                   </button>
                 );
               })}

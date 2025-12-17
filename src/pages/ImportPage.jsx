@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { UploadCloud, FileText, Clock } from 'lucide-react';
+import { UploadCloud, FileText, Clock, Download, FileWarning } from 'lucide-react';
 import Button from '../components/Button';
 import Card, { CardBody, CardHeader } from '../components/Card';
 import Alert from '../components/Alert';
@@ -28,6 +28,16 @@ const formatDate = (value) => {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('ru-RU');
 };
 
+const formatSize = (bytes) => {
+  if (bytes == null) return '—';
+  const value = Number(bytes);
+  if (Number.isNaN(value) || value < 0) return '—';
+  if (value < 1024) return `${value} Б`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} КБ`;
+  if (value < 1024 * 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} МБ`;
+  return `${(value / (1024 * 1024 * 1024)).toFixed(1)} ГБ`;
+};
+
 export default function ImportPage() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, becomeAdmin, becomeUser } = useAuth();
@@ -36,9 +46,11 @@ export default function ImportPage() {
   const [file, setFile] = useState(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [uploadError, setUploadError] = useState(null);
+  const [downloadError, setDownloadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [adminMode, setAdminMode] = useState(user?.role === 'ADMIN');
   const [objectType, setObjectType] = useState('ORGANIZATION');
+  const [activeDownloadId, setActiveDownloadId] = useState(null);
 
   const shouldFetchHistory = isAuthenticated;
 
@@ -104,6 +116,28 @@ export default function ImportPage() {
       setUploadError(err?.response?.data?.error || err.message || 'Не удалось скачать шаблон');
     },
   });
+
+  const handleDownload = async (operation) => {
+    if (!operation) return;
+    setDownloadError(null);
+    setActiveDownloadId(operation.id);
+    try {
+      const response = await importsApi.downloadFile(operation.id);
+      const blob = new Blob([response.data], { type: operation.storageContentType || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = operation.storageFileName || `import-${operation.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err?.response?.data?.error || err.message || 'Не удалось скачать файл импорта');
+    } finally {
+      setActiveDownloadId(null);
+    }
+  };
 
   const history = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const hasHistory = history.length > 0;
@@ -221,6 +255,11 @@ export default function ImportPage() {
           </div>
         </Alert>
       )}
+      {downloadError && (
+        <Alert type="error" onClose={() => setDownloadError(null)}>
+          Не удалось скачать файл импорта: {downloadError}
+        </Alert>
+      )}
       {uploadSuccess && (
         <Alert type="success" onClose={() => setUploadSuccess(null)}>
           Импорт #{uploadSuccess.id} — {STATUS_MAP[uploadSuccess.status]?.label || uploadSuccess.status}
@@ -326,6 +365,8 @@ export default function ImportPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Файл</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Комментарий</th>
                       {user?.role === 'ADMIN' && (
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
                       )}
@@ -341,6 +382,38 @@ export default function ImportPage() {
                           {IMPORT_TYPES[op.objectType] || op.objectType || '—'}
                         </td>
                         <td className="px-4 py-3 text-sm">{renderStatus(op.status)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {op.storageFileName ? (
+                            <div className="flex items-center gap-3">
+                              <div className="min-w-0">
+                                <div className="truncate font-medium">{op.storageFileName}</div>
+                                <div className="text-xs text-gray-500">{formatSize(op.storageSize)}</div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={activeDownloadId === op.id}
+                                onClick={() => handleDownload(op)}
+                                className="whitespace-nowrap"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Скачать
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 max-w-[220px]">
+                          {op.errorMessage ? (
+                            <span className="inline-flex items-center gap-2 text-red-700">
+                              <FileWarning className="h-4 w-4" />
+                              <span className="truncate" title={op.errorMessage}>{op.errorMessage}</span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">—</span>
+                          )}
+                        </td>
                         {user?.role === 'ADMIN' && <td className="px-4 py-3 text-sm text-gray-700">{op.username || '—'}</td>}
                         <td className="px-4 py-3 text-sm text-gray-700">{op.status === 'SUCCESS' ? op.addedCount ?? 0 : '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatDate(op.startedAt)}</td>
