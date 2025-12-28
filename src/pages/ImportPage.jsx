@@ -38,6 +38,55 @@ const formatSize = (bytes) => {
   return `${(value / (1024 * 1024 * 1024)).toFixed(1)} ГБ`;
 };
 
+const extractErrorMessage = async (err, fallback) => {
+  const defaultMessage = fallback || 'Произошла ошибка';
+  if (!err) return defaultMessage;
+
+  const status = err?.response?.status;
+  const data = err?.response?.data;
+
+  if (data) {
+    if (data instanceof Blob) {
+      let text = '';
+      try {
+        text = await data.text();
+      } catch {
+        text = '';
+      }
+      const trimmed = text.trim();
+      if (trimmed) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (typeof parsed === 'string' && parsed.trim()) {
+            return parsed.trim();
+          }
+          if (parsed && typeof parsed.error === 'string' && parsed.error.trim()) {
+            return parsed.error.trim();
+          }
+        } catch {
+          return trimmed;
+        }
+        return trimmed;
+      }
+    } else if (typeof data?.error === 'string' && data.error.trim()) {
+      return data.error.trim();
+    } else if (typeof data === 'string' && data.trim()) {
+      return data.trim();
+    }
+  }
+
+  if (status === 503) {
+    return 'Хранилище временно недоступно. Повторите попытку позже.';
+  }
+
+  const message = err?.message;
+  if (message && !/^Request failed with status code \d+$/.test(message)) {
+    return message;
+  }
+
+  return defaultMessage;
+};
+
 export default function ImportPage() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, becomeAdmin, becomeUser } = useAuth();
@@ -112,8 +161,9 @@ export default function ImportPage() {
       link.remove();
       URL.revokeObjectURL(url);
     },
-    onError: (err) => {
-      setUploadError(err?.response?.data?.error || err.message || 'Не удалось скачать шаблон');
+    onError: async (err) => {
+      const message = await extractErrorMessage(err, 'Не удалось скачать шаблон');
+      setUploadError(message);
     },
   });
 
@@ -133,7 +183,8 @@ export default function ImportPage() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setDownloadError(err?.response?.data?.error || err.message || 'Не удалось скачать файл импорта');
+      const message = await extractErrorMessage(err, 'Не удалось скачать файл импорта');
+      setDownloadError(message);
     } finally {
       setActiveDownloadId(null);
     }
@@ -257,7 +308,7 @@ export default function ImportPage() {
       )}
       {downloadError && (
         <Alert type="error" onClose={() => setDownloadError(null)}>
-          Не удалось скачать файл импорта: {downloadError}
+          {downloadError}
         </Alert>
       )}
       {uploadSuccess && (
